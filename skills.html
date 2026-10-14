@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Skills & Expertise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(51, 65, 85, 0.8);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-glow: rgba(56, 189, 248, 0.15);
+            --accent-border: #38bdf8;
+            --badge-bg: rgba(56, 189, 248, 0.1);
+            --badge-text: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(129, 140, 248, 0.05) 0%, transparent 40%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #f8fafc, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .table-wrapper {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: rgba(15, 23, 42, 0.8);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 16px 24px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+            color: var(--text-primary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Hover Animations */
+        tr {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        tr:hover {
+            background-color: var(--accent-glow);
+            transform: translateY(-2px);
+            box-shadow: inset 0 0 0 1px var(--accent-border);
+        }
+
+        .skill-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .domain-badge {
+            display: inline-block;
+            background-color: var(--badge-bg);
+            color: var(--badge-text);
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .stars {
+            color: #f59e0b;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+        }
+
+        .meta-info {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            th, td {
+                padding: 12px 16px;
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Core Competencies & Stack</h1>
+            <p class="subtitle">Cloud Architecture, DevOps, and Infrastructure Engineering Expertise</p>
+        </header>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Skill / Tool</th>
+                        <th>Domain</th>
+                        <th>Level, Experience & Rating</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="skill-name">Azure Cloud Platform <span class="meta-info">(Compute/Networking/Storage)</span></td>
+                        <td><span class="domain-badge">Cloud Eng</span></td>
+                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">AWS Cloud Platform <span class="meta-info">(Compute/Networking/Storage)</span></td>
+                        <td><span class="domain-badge">Cloud Eng</span></td>
+                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Google Cloud Platform <span class="meta-info">(Compute/Networking/Storage)</span></td>
+                        <td><span class="domain-badge">Cloud Eng</span></td>
+                        <td>Intermediate • 3 yrs • <span class="stars">★★★☆☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">On-Prem to Cloud / Cloud-to-Cloud Migration</td>
+                        <td><span class="domain-badge">Migration</span></td>
+                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Azure DevOps</td>
+                        <td><span class="domain-badge">CI/CD</span></td>
+                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Gitlab</td>
+                        <td><span class="domain-badge">CI/CD</span></td>
+                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Powershell / Bash Scripting</td>
+                        <td><span class="domain-badge">DevOps</span></td>
+                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Terraform</td>
+                        <td><span class="domain-badge">DevOps</span></td>
+                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">YAML Scripting & Templates</td>
+                        <td><span class="domain-badge">DevOps</span></td>
+                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Azure / AWS / Self-Managed Kubernetes</td>
+                        <td><span class="domain-badge">K8s Admin</span></td>
+                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Docker</td>
+                        <td><span class="domain-badge">Containers</span></td>
+                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">CI/CD Tools <span class="meta-info">(Git, Jenkins, Octopus, Argo)</span></td>
+                        <td><span class="domain-badge">DevOps</span></td>
+                        <td>Expert • 4 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Vercel \ Netlify</td>
+                        <td><span class="domain-badge">Hosting</span></td>
+                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Nginx, IIS, Apache, Node.js, Caddy, Cloudflare</td>
+                        <td><span class="domain-badge">Web Servers</span></td>
+                        <td>Expert • 4 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Cloudflare / WAF</td>
+                        <td><span class="domain-badge">Security</span></td>
+                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Splunk, Datadog, ELK, Grafana, Prometheus</td>
+                        <td><span class="domain-badge">Monitoring</span></td>
+                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Sonarqube / Semgrep</td>
+                        <td><span class="domain-badge">DevSecOps</span></td>
+                        <td>Intermediate • 3 yrs • <span class="stars">★★★☆☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Grafana K6 / Apache JMeter</td>
+                        <td><span class="domain-badge">Testing</span></td>
+                        <td>Expert • 4 yrs • <span class="stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Databases <span class="meta-info">(SQL, NoSQL, Cosmos, Redis, etc.)</span></td>
+                        <td><span class="domain-badge">Database</span></td>
+                        <td>Intermediate • 5 yrs • <span class="stars">★★★☆☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">Linux & Windows Server</td>
+                        <td><span class="domain-badge">OS</span></td>
+                        <td>Intermediate • 5 yrs • <span class="stars">★★★☆☆</span></td>
+                    </tr>
+                    <tr>
+                        <td class="skill-name">AI Models & Prompts <span class="meta-info">(Claude, Gemini, GPT, DeepSeek)</span></td>
+                        <td><span class="domain-badge">AI / Prompt Eng</span></td>
+                        <td>Intermediate • 1 yr • <span class="stars">★★★☆☆</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>
