@@ -100,7 +100,7 @@
             border-bottom: none;
         }
 
-        /* Hover Animations */
+        /* Row Hover & Animation Effects */
         tr {
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -125,12 +125,51 @@
             font-size: 0.75rem;
             font-weight: 500;
             border: 1px solid rgba(56, 189, 248, 0.2);
+            transition: transform 0.2s ease;
         }
 
-        .stars {
-            color: #f59e0b;
-            letter-spacing: 2px;
-            font-size: 0.9rem;
+        tr:hover .domain-badge {
+            transform: scale(1.05);
+        }
+
+        /* Animated Stars Styling */
+        .stars-container {
+            display: inline-flex;
+            gap: 2px;
+            letter-spacing: 1px;
+        }
+
+        .star {
+            color: #475569; /* Unfilled/muted star background look */
+            position: relative;
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        .star.filled {
+            color: #f59e0b; /* Vibrant amber for filled stars */
+        }
+
+        /* Staggered hover animations for individual stars inside a row */
+        tr:hover .star.filled {
+            animation: starPulse 0.6s ease infinite alternate;
+        }
+
+        tr:hover .star.filled:nth-child(1) { animation-delay: 0.0s; }
+        tr:hover .star.filled:nth-child(2) { animation-delay: 0.1s; }
+        tr:hover .star.filled:nth-child(3) { animation-delay: 0.2s; }
+        tr:hover .star.filled:nth-child(4) { animation-delay: 0.3s; }
+        tr:hover .star.filled:nth-child(5) { animation-delay: 0.4s; }
+
+        @keyframes starPulse {
+            0% {
+                transform: scale(1);
+                text-shadow: 0 0 2px rgba(245, 158, 11, 0.2);
+            }
+            100% {
+                transform: scale(1.25) rotate(5deg);
+                text-shadow: 0 0 10px rgba(245, 158, 11, 0.8), 0 0 20px rgba(245, 158, 11, 0.4);
+            }
         }
 
         .meta-info {
@@ -152,7 +191,7 @@
 
     <div class="container">
         <header>
-            <h1>Pranesh Sathyanarayan - Core Competencies & Skills</h1>
+            <h1>Core Competencies & Stack</h1>
             <p class="subtitle">Cloud Architecture, DevOps, and Infrastructure Engineering Expertise</p>
         </header>
 
@@ -169,107 +208,107 @@
                     <tr>
                         <td class="skill-name">Azure Cloud Platform <span class="meta-info">(Compute/Networking/Storage)</span></td>
                         <td><span class="domain-badge">Cloud Eng</span></td>
-                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">AWS Cloud Platform <span class="meta-info">(Compute/Networking/Storage)</span></td>
                         <td><span class="domain-badge">Cloud Eng</span></td>
-                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Google Cloud Platform <span class="meta-info">(Compute/Networking/Storage)</span></td>
                         <td><span class="domain-badge">Cloud Eng</span></td>
-                        <td>Intermediate • 3 yrs • <span class="stars">★★★☆☆</span></td>
+                        <td>Intermediate • 3 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">On-Prem to Cloud / Cloud-to-Cloud Migration</td>
                         <td><span class="domain-badge">Migration</span></td>
-                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Azure DevOps</td>
                         <td><span class="domain-badge">CI/CD</span></td>
-                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Gitlab</td>
                         <td><span class="domain-badge">CI/CD</span></td>
-                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Powershell / Bash Scripting</td>
                         <td><span class="domain-badge">DevOps</span></td>
-                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Terraform</td>
                         <td><span class="domain-badge">DevOps</span></td>
-                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">YAML Scripting & Templates</td>
                         <td><span class="domain-badge">DevOps</span></td>
-                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Azure / AWS / Self-Managed Kubernetes</td>
                         <td><span class="domain-badge">K8s Admin</span></td>
-                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Docker</td>
                         <td><span class="domain-badge">Containers</span></td>
-                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">CI/CD Tools <span class="meta-info">(Git, Jenkins, Octopus, Argo)</span></td>
                         <td><span class="domain-badge">DevOps</span></td>
-                        <td>Expert • 4 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Vercel \ Netlify</td>
                         <td><span class="domain-badge">Hosting</span></td>
-                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Nginx, IIS, Apache, Node.js, Caddy, Cloudflare</td>
                         <td><span class="domain-badge">Web Servers</span></td>
-                        <td>Expert • 4 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Cloudflare / WAF</td>
                         <td><span class="domain-badge">Security</span></td>
-                        <td>Expert • 8 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Splunk, Datadog, ELK, Grafana, Prometheus</td>
                         <td><span class="domain-badge">Monitoring</span></td>
-                        <td>Expert • 6 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Sonarqube / Semgrep</td>
                         <td><span class="domain-badge">DevSecOps</span></td>
-                        <td>Intermediate • 3 yrs • <span class="stars">★★★☆☆</span></td>
+                        <td>Intermediate • 3 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Grafana K6 / Apache JMeter</td>
                         <td><span class="domain-badge">Testing</span></td>
-                        <td>Expert • 4 yrs • <span class="stars">★★★★☆</span></td>
+                        <td>Expert • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Databases <span class="meta-info">(SQL, NoSQL, Cosmos, Redis, etc.)</span></td>
                         <td><span class="domain-badge">Database</span></td>
-                        <td>Intermediate • 5 yrs • <span class="stars">★★★☆☆</span></td>
+                        <td>Intermediate • 5 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">Linux & Windows Server</td>
                         <td><span class="domain-badge">OS</span></td>
-                        <td>Intermediate • 5 yrs • <span class="stars">★★★☆☆</span></td>
+                        <td>Intermediate • 5 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td class="skill-name">AI Models & Prompts <span class="meta-info">(Claude, Gemini, GPT, DeepSeek)</span></td>
                         <td><span class="domain-badge">AI / Prompt Eng</span></td>
-                        <td>Intermediate • 1 yr • <span class="stars">★★★☆☆</span></td>
+                        <td>Intermediate • 1 yr • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                 </tbody>
             </table>
