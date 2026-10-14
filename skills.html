@@ -147,6 +147,25 @@
             box-shadow: inset 0 0 0 1px var(--accent-border);
         }
 
+        .skill-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tech-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            flex-shrink: 0;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        tr:hover .tech-icon {
+            transform: scale(1.15) rotate(3deg);
+        }
+
         .skill-name {
             font-weight: 600;
             color: #ffffff;
@@ -233,7 +252,7 @@
     <div class="container">
         <header>
             <div class="header-badge">
-                <span class="pulse-dot"></span> Principal Engineer - Cloud engineering and DevOps
+                <span class="pulse-dot"></span> Principal Engineer - Cloud Engineering and DevOps
             </div>
             <h1>Core Competencies & Stack</h1>
             <p class="subtitle">Production-grade expertise spanning multi-cloud architectures, CI/CD pipelines, container orchestration, and infrastructure automation.</p>
@@ -250,107 +269,212 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="skill-name">Azure Cloud Platform <span class="meta-info">(Compute/Networking/Storage)</span></td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg" alt="Azure" class="tech-icon">
+                                <div><span class="skill-name">Azure Cloud Platform</span> <span class="meta-info">(Compute/Networking/Storage)</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">Cloud Eng</span></td>
                         <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">AWS Cloud Platform <span class="meta-info">(Compute/Networking/Storage)</span></td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg" alt="AWS" class="tech-icon">
+                                <div><span class="skill-name">AWS Cloud Platform</span> <span class="meta-info">(Compute/Networking/Storage)</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">Cloud Eng</span></td>
                         <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Google Cloud Platform <span class="meta-info">(Compute/Networking/Storage)</span></td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg" alt="GCP" class="tech-icon">
+                                <div><span class="skill-name">Google Cloud Platform</span> <span class="meta-info">(Compute/Networking/Storage)</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">Cloud Eng</span></td>
                         <td>Intermediate • 3 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">On-Prem to Cloud / Cloud-to-Cloud Migration</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg" alt="Migration" class="tech-icon">
+                                <div><span class="skill-name">On-Prem to Cloud / Cloud-to-Cloud Migration</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">Migration</span></td>
                         <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Azure DevOps</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg" alt="Azure DevOps" class="tech-icon">
+                                <div><span class="skill-name">Azure DevOps</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">CI/CD</span></td>
                         <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Gitlab</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/gitlab/gitlab-original.svg" alt="GitLab" class="tech-icon">
+                                <div><span class="skill-name">Gitlab</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">CI/CD</span></td>
                         <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Powershell / Bash Scripting</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/powershell/powershell-original.svg" alt="PowerShell" class="tech-icon">
+                                <div><span class="skill-name">Powershell / Bash Scripting</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">DevOps</span></td>
                         <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Terraform</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/terraform/terraform-original.svg" alt="Terraform" class="tech-icon">
+                                <div><span class="skill-name">Terraform</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">DevOps</span></td>
                         <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">YAML Scripting & Templates</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/yaml/yaml-original.svg" alt="YAML" class="tech-icon">
+                                <div><span class="skill-name">YAML Scripting & Templates</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">DevOps</span></td>
                         <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Azure / AWS / Self-Managed Kubernetes</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg" alt="Kubernetes" class="tech-icon">
+                                <div><span class="skill-name">Azure / AWS / Self-Managed Kubernetes</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">K8s Admin</span></td>
                         <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Docker</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker" class="tech-icon">
+                                <div><span class="skill-name">Docker</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">Containers</span></td>
                         <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">CI/CD Tools <span class="meta-info">(Git, Jenkins, Octopus, Argo)</span></td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jenkins/jenkins-original.svg" alt="CI/CD Tools" class="tech-icon">
+                                <div><span class="skill-name">CI/CD Tools</span> <span class="meta-info">(Git, Jenkins, Octopus, Argo)</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">DevOps</span></td>
                         <td>Expert • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Vercel \ Netlify</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/netlify/netlify-original.svg" alt="Hosting" class="tech-icon">
+                                <div><span class="skill-name">Vercel \ Netlify</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">Hosting</span></td>
                         <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Nginx, IIS, Apache, Node.js, Caddy, Cloudflare</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nginx/nginx-original.svg" alt="Web Servers" class="tech-icon">
+                                <div><span class="skill-name">Nginx, IIS, Apache, Node.js, Caddy, Cloudflare</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">Web Servers</span></td>
                         <td>Expert • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Cloudflare / WAF</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cloudflare/cloudflare-original.svg" alt="Cloudflare" class="tech-icon">
+                                <div><span class="skill-name">Cloudflare / WAF</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">Security</span></td>
                         <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Splunk, Datadog, ELK, Grafana, Prometheus</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/grafana/grafana-original.svg" alt="Monitoring" class="tech-icon">
+                                <div><span class="skill-name">Splunk, Datadog, ELK, Grafana, Prometheus</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">Monitoring</span></td>
                         <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Sonarqube / Semgrep</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/sonarqube/sonarqube-original.svg" alt="SonarQube" class="tech-icon">
+                                <div><span class="skill-name">Sonarqube / Semgrep</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">DevSecOps</span></td>
                         <td>Intermediate • 3 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Grafana K6 / Apache JMeter</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apache/apache-original.svg" alt="Testing" class="tech-icon">
+                                <div><span class="skill-name">Grafana K6 / Apache JMeter</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">Testing</span></td>
                         <td>Expert • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Databases <span class="meta-info">(SQL, NoSQL, Cosmos, Redis, etc.)</span></td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="Databases" class="tech-icon">
+                                <div><span class="skill-name">Databases</span> <span class="meta-info">(SQL, NoSQL, Cosmos, Redis, etc.)</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">Database</span></td>
                         <td>Intermediate • 5 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">Linux & Windows Server</td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/windows8/windows8-original.svg" alt="OS" class="tech-icon">
+                                <div><span class="skill-name">Linux & Windows Server</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">OS</span></td>
                         <td>Intermediate • 5 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
-                        <td class="skill-name">AI Models & Prompts <span class="meta-info">(Claude, Gemini, GPT, DeepSeek)</span></td>
+                        <td>
+                            <div class="skill-cell">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="AI Models" class="tech-icon">
+                                <div><span class="skill-name">AI Models & Prompts</span> <span class="meta-info">(Claude, Gemini, GPT, DeepSeek)</span></div>
+                            </div>
+                        </td>
                         <td><span class="domain-badge">AI / Prompt Eng</span></td>
                         <td>Intermediate • 1 yr • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
