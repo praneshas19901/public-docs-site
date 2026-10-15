@@ -193,11 +193,54 @@
             box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
         }
 
+        /* Experience Level Badges (Expert vs Intermediate Pop-out Effect) */
+        .level-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .level-badge.expert {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .level-badge.intermediate {
+            background: rgba(234, 179, 8, 0.12);
+            color: #facc15;
+            border: 1px solid rgba(234, 179, 8, 0.25);
+        }
+
+        /* Hover Pop-out Effect for Level Badges */
+        tr:hover .level-badge.expert {
+            transform: scale(1.12);
+            background: rgba(16, 185, 129, 0.25);
+            color: #6ee7b7;
+            border-color: #10b981;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+        }
+
+        tr:hover .level-badge.intermediate {
+            transform: scale(1.12);
+            background: rgba(234, 179, 8, 0.25);
+            color: #fde047;
+            border-color: #eab308;
+            box-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
+        }
+
         /* Animated Stars Styling */
         .stars-container {
             display: inline-flex;
             gap: 2px;
             letter-spacing: 1px;
+            vertical-align: middle;
+            margin-left: 6px;
         }
 
         .star {
@@ -276,7 +319,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">Cloud Eng</span></td>
-                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -286,7 +329,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">Cloud Eng</span></td>
-                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -296,18 +339,17 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">Cloud Eng</span></td>
-                        <td>Intermediate • 3 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge intermediate">Intermediate</span> • 3 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
                             <div class="skill-cell">
-                                <!-- Updated SVG for Migration (Server Sync / Network transfer icon) -->
                                 <img src="https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/cloud-upload.svg" alt="Migration" class="tech-icon">
                                 <div><span class="skill-name">On-Prem to Cloud / Cloud-to-Cloud Migration</span></div>
                             </div>
                         </td>
                         <td><span class="domain-badge">Migration</span></td>
-                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -317,7 +359,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">CI/CD</span></td>
-                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -327,7 +369,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">CI/CD</span></td>
-                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -337,7 +379,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">DevOps</span></td>
-                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -347,7 +389,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">DevOps</span></td>
-                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -357,7 +399,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">DevOps</span></td>
-                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -367,7 +409,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">K8s Admin</span></td>
-                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -377,7 +419,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">Containers</span></td>
-                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -387,7 +429,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">DevOps</span></td>
-                        <td>Expert • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -397,7 +439,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">Hosting</span></td>
-                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -407,7 +449,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">Web Servers</span></td>
-                        <td>Expert • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -417,7 +459,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">Security</span></td>
-                        <td>Expert • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 8 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -427,7 +469,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">Monitoring</span></td>
-                        <td>Expert • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 6 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -437,7 +479,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">DevSecOps</span></td>
-                        <td>Intermediate • 3 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge intermediate">Intermediate</span> • 3 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -447,7 +489,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">Testing</span></td>
-                        <td>Expert • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge expert">Expert</span> • 4 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -457,7 +499,7 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">Database</span></td>
-                        <td>Intermediate • 5 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge intermediate">Intermediate</span> • 5 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
@@ -467,18 +509,17 @@
                             </div>
                         </td>
                         <td><span class="domain-badge">OS</span></td>
-                        <td>Intermediate • 5 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge intermediate">Intermediate</span> • 5 yrs • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                     <tr>
                         <td>
                             <div class="skill-cell">
-                                <!-- Updated SVG for AI Models & Prompts (TensorFlow / Neural network node icon) -->
                                 <img src="https://cdn.jsdelivr.net/npm/simple-icons@16.35.0/icons/claude.svg" alt="AI Models" class="tech-icon">
                                 <div><span class="skill-name">AI Models & Prompts</span> <span class="meta-info">(Claude, Gemini, GPT, DeepSeek)</span></div>
                             </div>
                         </td>
                         <td><span class="domain-badge">AI / Prompt Eng</span></td>
-                        <td>Intermediate • 1 yr • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
+                        <td><span class="level-badge intermediate">Intermediate</span> • 1 yr • <span class="stars-container"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">☆</span><span class="star">☆</span></span></td>
                     </tr>
                 </tbody>
             </table>
