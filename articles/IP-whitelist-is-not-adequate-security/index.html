@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why IP Whitelisting Is Inadequate as a Security Control</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        code, pre {
+            font-family: 'Fira Code', monospace;
+        }
+        .prose pre {
+            background-color: #0d1117;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .prose code:not(pre code) {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+    <main class="max-w-4xl mx-auto bg-white p-6 sm:p-10 lg:p-12 rounded-xl shadow-sm border border-slate-200 prose prose-slate lg:prose-lg max-w-none">
+        
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-6">Why IP Whitelisting Is Inadequate as a Security Control</h1>
+        
+        <p class="text-lg text-slate-600 leading-relaxed">
+            When you host on SaaS platforms such as Netlify or Vercel, many firewall-protected services may block you, leading you to think IP whitelisting is a good solution. Here's why this is not a good security practice. The core problem is a category error: <strong class="text-slate-900">IP whitelisting is an <em>identification</em> mechanism, not an <em>authentication</em> or <em>authorization</em> mechanism.</strong> It answers "what network did this packet originate from?" — not "who is the caller?", "are they authorized?", or "has the payload been tampered with?" Every bypass below exploits this gap.
+        </p>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">1. Shared infrastructure makes the whitelist porous</h2>
+            <p>Netlify Functions run on <strong class="font-semibold text-slate-900">AWS Lambda</strong>, and Lambda egress IPs are drawn from AWS's shared regional NAT pools. Those addresses are used by:</p>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li>Every other Netlify customer's functions,</li>
+                <li>Every other AWS Lambda customer in that region,</li>
+                <li>Any AWS service with a NAT Gateway in the same subnet ranges.</li>
+            </ul>
+            <p class="mt-4">
+                Netlify does <strong class="font-semibold text-slate-900">not</strong> publish a stable, dedicated egress IP list for Functions, and even if it did, that list would be AWS's shared Lambda egress pool. AWS explicitly documents that Lambda egress IPs are <strong class="font-semibold text-slate-900">dynamic and shared</strong>, and recommends a NAT Gateway with an Elastic IP only if you need a stable address — which is exactly the AWS/Azure public-IP architecture you're trying to avoid.
+            </p>
+            
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 my-6 rounded-r-md">
+                <p class="font-bold text-amber-900 m-0">Consequence:</p>
+                <p class="text-amber-800 m-0 mt-1">"Whitelist Netlify's IPs" effectively means "whitelist a large slice of the AWS Lambda ecosystem." The whitelist stops being a security boundary and becomes an open door with a sign on it.</p>
+            </div>
+
+            <h3 class="text-xl font-semibold text-slate-900 mt-6 mb-3">Attack: free-tier tenant abuse</h3>
+            <ol class="list-decimal pl-6 space-y-2 text-slate-700">
+                <li>Attacker signs up for a free Netlify account (or any AWS account in the whitelisted region).</li>
+                <li>Deploys a one-line function that calls Freshdesk.</li>
+                <li>The request originates from the <strong class="font-semibold text-slate-900">same egress IP range</strong> the WAF trusts.</li>
+                <li>The WAF allows it.</li>
+            </ol>
+            <p class="mt-4">
+                The attacker is now "inside" the perimeter without ever spoofing anything. They can enumerate ticket IDs, probe rate limits, brute-force endpoints, or use Freshdesk as a launchpad for further SSRF-style probing — limited only by Freshdesk's <em>own</em> auth, not by your IP rule.
+            </p>
+            <p class="font-medium text-slate-900">This is the single most important bypass, and it requires no exotic technique.</p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">2. SSRF turns any whitelisted host into a proxy</h2>
+            <p>
+                If <strong class="font-semibold text-slate-900">any</strong> application hosted in the whitelisted range has a server-side request forgery vulnerability, the attacker can make that host issue requests to Freshdesk on their behalf. The request legitimately comes from the whitelisted IP, carries whatever headers the vulnerable app adds, and the WAF sees a trusted source.
+            </p>
+            <p>Common SSRF surfaces:</p>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li>URL-fetching features (image previews, webhooks, PDF renderers, RSS importers).</li>
+                <li>Open redirects chained with server-side fetchers.</li>
+                <li>Misconfigured <code>fetch()</code> / <code>requests.get()</code> calls that accept user-controlled URLs.</li>
+                <li>Metadata-service access paths (169.254.169.254) that lead to credential theft, then onward API calls.</li>
+            </ul>
+            <p class="mt-4">
+                Because Netlify/AWS egress is shared, the attacker doesn't even need <em>your</em> app to be vulnerable — any vulnerable tenant in the same egress pool works.
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">3. BGP hijacking and route manipulation</h2>
+            <p>
+                IP whitelisting trusts the <strong class="font-semibold text-slate-900">routing system</strong> to deliver packets only from the legitimate owner of that prefix. BGP has no built-in cryptographic origin validation at internet scale (RPKI is partial and not universally deployed). Attackers — or misconfigured ISPs — can announce a more-specific prefix for the whitelisted range and attract traffic.
+            </p>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li>A nation-state or large ISP-level actor can hijack the prefix and receive Freshdesk's replies.</li>
+                <li>More commonly, <strong class="font-semibold text-slate-900">route leaks</strong> cause traffic to transit unintended networks, where it can be observed.</li>
+            </ul>
+            <p class="mt-4">
+                This is rare but real (e.g., the 2008 Pakistan Telecom/YouTube hijack, the 2018 Amazon Route 53 hijack, the 2021 Facebook outage caused by BGP withdrawal). Whitelisting assumes the routing layer is trustworthy; it is not.
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">4. On-path MITM and compromised intermediaries</h2>
+            <p>
+                If an attacker controls any hop between the whitelisted egress and Freshdesk — a compromised router, a malicious ISP, a TLS-terminating middlebox, a corporate proxy — they can:
+            </p>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li>Observe the traffic (confidentiality loss),</li>
+                <li>Inject or modify packets (integrity loss),</li>
+                <li>Replay captured requests (replay attack, unless timestamps/nonces are enforced).</li>
+            </ul>
+            <p class="mt-4">
+                The source IP is still the whitelisted one. The whitelist does nothing here; only <strong class="font-semibold text-slate-900">TLS plus application-layer signing/nonces</strong> defends against this.
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">5. Header spoofing if the WAF trusts forwarding headers</h2>
+            <p>
+                Many WAFs and origin servers derive the "client IP" from <code>X-Forwarded-For</code>, <code>X-Real-IP</code>, <code>Forwarded</code>, or <code>CF-Connecting-IP</code>. If Freshdesk's WAF (or any intermediary) trusts a client-supplied forwarding header rather than the actual TCP source address, an attacker can simply send:
+            </p>
+            <pre><code class="language-http">X-Forwarded-For: &lt;your-whitelisted-IP&gt;</code></pre>
+            <p class="mt-4">
+                and the WAF will believe the request came from you. This is a misconfiguration, but it is common. Any IP-whitelisting design must verify that the enforcement point reads the <strong class="font-semibold text-slate-900">TCP source</strong>, not a header.
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">6. Compromise of a legitimate host in the whitelisted range</h2>
+            <p>Even a <strong class="font-semibold text-slate-900">static, dedicated</strong> IP is only as trustworthy as every process that can send from it:</p>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Insider threat</strong> — an employee or contractor with access to the proxy host.</li>
+                <li><strong class="font-semibold text-slate-900">Supply-chain compromise</strong> — a malicious npm package, a poisoned container image, a compromised CI/CD pipeline that deploys code to the proxy.</li>
+                <li><strong class="font-semibold text-slate-900">Credential theft</strong> — stolen SSH keys, cloud IAM keys, or deployment tokens.</li>
+                <li><strong class="font-semibold text-slate-900">Lateral movement</strong> — an attacker who compromises any service in the same VPC/subnet and pivots to the proxy.</li>
+            </ul>
+            <p class="mt-4">
+                The IP is still "correct." The whitelist cannot distinguish a legitimate request from a malicious one issued by code running on the trusted host.
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">7. Cloud IP reassignment and lifecycle drift</h2>
+            <p>Cloud providers reassign elastic IPs and NAT addresses over time:</p>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li>An IP released by your account can be <strong class="font-semibold text-slate-900">reallocated to another AWS customer</strong>.</li>
+                <li>A region's NAT pool can change.</li>
+                <li>IPv6 ranges are often less monitored and less consistently firewalled.</li>
+            </ul>
+            <p class="mt-4">
+                If your whitelist is static but the provider's assignment is dynamic, you eventually either (a) block yourself, or (b) whitelist an address that now belongs to someone else.
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">8. What IP whitelisting fails to provide</h2>
+            <p>Whitelisting provides <strong class="font-semibold text-slate-900">none</strong> of the core security properties:</p>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Property</th>
+                            <th class="p-3 border border-slate-200">What it requires</th>
+                            <th class="p-3 border border-slate-200">Does whitelisting provide it?</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-medium">Authentication (who is calling?)</td>
+                            <td class="p-3 border border-slate-200">Credentials, tokens, certificates</td>
+                            <td class="p-3 border border-slate-200 text-red-600 font-bold">❌ No — only "where from"</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-medium">Authorization (may they do this?)</td>
+                            <td class="p-3 border border-slate-200">Scopes, roles, policy</td>
+                            <td class="p-3 border border-slate-200 text-red-600 font-bold">❌ No</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-medium">Confidentiality (no snooping)</td>
+                            <td class="p-3 border border-slate-200">TLS / encryption</td>
+                            <td class="p-3 border border-slate-200 text-red-600 font-bold">❌ No</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-medium">Integrity (no tampering)</td>
+                            <td class="p-3 border border-slate-200">Signatures, MACs, TLS</td>
+                            <td class="p-3 border border-slate-200 text-red-600 font-bold">❌ No</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-medium">Replay protection</td>
+                            <td class="p-3 border border-slate-200">Nonces, timestamps, short expiry</td>
+                            <td class="p-3 border border-slate-200 text-red-600 font-bold">❌ No</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-medium">Non-repudiation</td>
+                            <td class="p-3 border border-slate-200">Signatures with keys</td>
+                            <td class="p-3 border border-slate-200 text-red-600 font-bold">❌ No</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-medium">Rate limiting / abuse control</td>
+                            <td class="p-3 border border-slate-200">Quotas, anomaly detection</td>
+                            <td class="p-3 border border-slate-200 text-red-600 font-bold">❌ No</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-medium">Least privilege</td>
+                            <td class="p-3 border border-slate-200">Scoped credentials</td>
+                            <td class="p-3 border border-slate-200 text-red-600 font-bold">❌ No</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>
+                An attacker who is "inside" the whitelist has <strong class="font-semibold text-slate-900">full, unauthenticated access</strong> to whatever the protected service exposes. The whitelist is a single bit of trust: inside or outside. There is no notion of "how much" or "for what."
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">9. The castle-and-moat fallacy</h2>
+            <p>IP whitelisting is a perimeter control. Perimeter controls assume:</p>
+            <blockquote class="border-l-4 border-slate-400 pl-4 italic text-slate-700 my-4">
+                "If you're inside the network, you're trusted."
+            </blockquote>
+            <p>Modern attacks routinely defeat this assumption via:</p>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Multi-tenancy</strong> (shared cloud egress — §1)</li>
+                <li><strong class="font-semibold text-slate-900">SSRF and pivot</strong> (§2)</li>
+                <li><strong class="font-semibold text-slate-900">Supply chain</strong> (§6)</li>
+                <li><strong class="font-semibold text-slate-900">Credential theft</strong> (§6)</li>
+                <li><strong class="font-semibold text-slate-900">Routing compromise</strong> (§3)</li>
+            </ul>
+            <p class="mt-4">
+                Once any of these succeeds, the attacker has the same trust level as your legitimate app. There is no second check.
+            </p>
+            <p>
+                Zero-trust architecture inverts this: <strong class="font-semibold text-slate-900">authenticate and authorize every request, regardless of source network.</strong> The network location is treated as untrusted metadata, not as a credential.
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">10. What IP whitelisting <em>is</em> good for</h2>
+            <p>To be fair, whitelisting is not worthless. It is useful as <strong class="font-semibold text-slate-900">defense-in-depth</strong>:</p>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li>It <strong class="font-semibold text-slate-900">reduces attack surface</strong> — fewer scanners, bots, and opportunistic probes reach the service.</li>
+                <li>It <strong class="font-semibold text-slate-900">adds a hurdle</strong> — attackers must first obtain an IP in the trusted range (via free-tier signup, SSRF, or compromise).</li>
+                <li>It is <strong class="font-semibold text-slate-900">cheap</strong> and <strong class="font-semibold text-slate-900">simple</strong> for low-risk, low-traffic admin interfaces.</li>
+            </ul>
+            <p class="mt-4">
+                But it must <strong class="font-semibold text-slate-900">never</strong> be the sole control. It belongs in a layered design alongside:
+            </p>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li>TLS with certificate validation (and pinning where possible).</li>
+                <li>Short-lived, scoped tokens (JWT/OAuth) for service-to-service auth.</li>
+                <li>mTLS for mutual authentication if the counterparty supports it.</li>
+                <li>HMAC signatures with timestamps/nonces for integrity and replay protection.</li>
+                <li>Rate limiting and anomaly detection.</li>
+                <li>Secret management and rotation.</li>
+                <li>Least-privilege API keys scoped to specific endpoints/actions.</li>
+            </ul>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">Bottom line</h2>
+            <p>
+                IP whitelisting answers <strong class="font-semibold text-slate-900">"where"</strong>, not <strong class="font-semibold text-slate-900">"who"</strong> or <strong class="font-semibold text-slate-900">"may they."</strong> It is porous because cloud egress is shared, because SSRF and supply-chain compromise let attackers borrow the trusted IP, because BGP and on-path attackers can subvert the routing assumption, and because it provides none of the cryptographic guarantees (confidentiality, integrity, replay protection, non-repudiation) that a real authentication scheme requires.
+            </p>
+            <p class="mt-4">
+                In your Freshdesk case specifically: whitelisting Netlify/AWS egress means whitelisting a large multi-tenant pool, which any attacker can join for free. The only durable fix is to <strong class="font-semibold text-slate-900">authenticate the request itself</strong> — short-lived JWT from your app to the proxy, Freshdesk API key held server-side, TLS end-to-end, and optional HMAC/timestamp for integrity and replay protection — and treat the source IP as a hint, never as a credential.
+            </p>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-3xl font-extrabold text-slate-900 mb-6">The Solution</h2>
+            <p>A more robust approach to security has been discussed below:</p>
+            <p>We'll take <strong class="font-semibold text-slate-900">Freshdesk API with a WAF</strong> as an example.</p>
+            <p>
+                To get Freshdesk's WAF to consistently allow your requests, you need to move beyond static secrets and design a system where the "special header" is <strong class="font-semibold text-slate-900">cryptographically bound to each request</strong>. A static header value, even if kept secret, can be replayed or leaked. The solution is a <strong class="font-semibold text-slate-900">signed request header</strong> generated on the server, using a secret that never leaves Netlify.
+            </p>
+            <p>
+                This approach provides a durable bypass because the WAF rule can be configured to look for a valid, unique signature rather than a guessable string.
+            </p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">🛡️ The Core Mechanism: HMAC Request Signing</h3>
+            <p>
+                Instead of sending a fixed token, your Netlify Function will compute a <strong class="font-semibold text-slate-900">Hash-based Message Authentication Code (HMAC)</strong> for every outgoing request to Freshdesk. This signature proves the request was generated by someone holding the secret key and that the request hasn't been tampered with in transit.
+            </p>
+            <p>
+                The WAF is then configured to validate this signature. Because the signature changes for every request (incorporating a timestamp, a unique nonce, and the request body), an attacker who intercepts one request cannot reuse the header for a different request or replay the same request later.
+            </p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">⚙️ Real-World Implementation on Netlify</h3>
+            <p>Here is how to implement this securely on Netlify, addressing the platform's constraints.</p>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">1. Store the Secret Key Securely</h4>
+            <p>
+                Use <strong class="font-semibold text-slate-900">Netlify's Secrets Controller</strong> to store your HMAC secret key. This goes beyond standard environment variables by enforcing a write-only policy, meaning the value cannot be read back from the UI or API after it is set, and restricting it to only be accessible by your serverless functions at runtime.
+            </p>
+            <pre><code class="language-bash"># Store the secret using the Netlify CLI
+netlify env:set HMAC_SECRET "your-super-long-random-string" --secret</code></pre>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">2. Generate the Signature in a Netlify Function</h4>
+            <p>Your Netlify Function acts as the proxy. It constructs a canonical string from the request, signs it with the secret, and attaches the signature and related metadata as headers.</p>
+
+            <pre><code class="language-javascript">const crypto = require('crypto');
+
+exports.handler = async (event) => {
+  // ... (Your existing JWT verification logic for client auth)
+
+  const freshdeskUrl = `https://${process.env.FRESHDESK_DOMAIN}${event.path}`;
+  const timestamp = Date.now().toString();
+  const nonce = crypto.randomBytes(16).toString('hex');
+  const body = event.body || '';
+
+  // Create the canonical string to sign (order matters and must match the WAF validator)
+  const canonicalString = `${event.httpMethod}\n${event.path}\n${timestamp}\n${nonce}\n${body}`;
+  
+  // Generate the HMAC signature using the secret from Netlify Secrets Controller
+  const signature = crypto
+    .createHmac('sha256', process.env.HMAC_SECRET)
+    .update(canonicalString)
+    .digest('hex');
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Basic ${Buffer.from(`${process.env.FRESHDESK_API_KEY}:X`).toString('base64')}`,
+    'X-Signature': signature,      // The dynamic, cryptographic header
+    'X-Timestamp': timestamp,      // Prevents replay attacks
+    'X-Nonce': nonce,              // Adds uniqueness to every request
+  };
+
+  const response = await fetch(freshdeskUrl, {
+    method: event.httpMethod,
+    headers: headers,
+    body: event.httpMethod === 'GET' ? undefined : body,
+  });
+
+  // ... (Return response to client)
+};</code></pre>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">3. What the Freshdesk WAF Must Validate</h4>
+            <p>You would need to coordinate with Freshdesk support to configure a WAF rule that performs the following on requests to your specific API key or domain:</p>
+            <ol class="list-decimal pl-6 space-y-2 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Check for Presence:</strong> Verify that the <code>X-Signature</code>, <code>X-Timestamp</code>, and <code>X-Nonce</code> headers exist.</li>
+                <li><strong class="font-semibold text-slate-900">Prevent Replay:</strong> Reject the request if the <code>X-Timestamp</code> is too old (e.g., older than 5 minutes) or if the <code>X-Nonce</code> has been seen before.</li>
+                <li><strong class="font-semibold text-slate-900">Recompute and Compare:</strong> Rebuild the canonical string using the incoming method, path, timestamp, nonce, and body, then compute the HMAC using the pre-shared secret. If the computed signature does not match the <code>X-Signature</code> header, block the request.</li>
+            </ol>
+
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 my-6 rounded-r-md">
+                <h4 class="font-bold text-red-900 m-0 text-base">⚠️ Critical Constraint: The Egress IP Problem</h4>
+                <p class="text-red-800 m-0 mt-2">
+                    This cryptographic header solves the <em>authentication</em> problem, but it does <strong class="font-semibold">not</strong> solve the <em>network path</em> problem. Netlify Functions run on AWS Lambda with <strong class="font-semibold">dynamic, rotating egress IPs</strong>; Netlify does not provide a static outbound IP on standard plans.
+                </p>
+                <p class="text-red-800 m-0 mt-2">
+                    If Freshdesk's WAF is blocking entire AWS or Cloudflare IP ranges based on reputation, your signed request may still be blocked before the WAF even inspects the headers. A cryptographic signature cannot force an IP-based block to be lifted.
+                </p>
+            </div>
+
+            <p><strong class="font-semibold text-slate-900">The practical path forward is twofold:</strong></p>
+            <ol class="list-decimal pl-6 space-y-2 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Engage Freshdesk Support:</strong> Present this signed-header design. Ask if their WAF can be configured to allowlist requests that carry a valid HMAC signature for your API key, regardless of the source IP. This is the only way to achieve a true header-based bypass.</li>
+                <li><strong class="font-semibold text-slate-900">Have a Network Fallback Ready:</strong> If Freshdesk confirms the block is purely IP-based and cannot be bypassed via headers, you will need a static egress IP. Since you want to avoid a VM, the serverless options are <strong class="font-semibold text-slate-900">Netlify's Private Connectivity</strong> (an Enterprise add-on) or a lightweight <strong class="font-semibold text-slate-900">static IP proxy service</strong> like QuotaGuard or Fixie, which provides a fixed IP endpoint for your function's outbound traffic.</li>
+            </ol>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">💎 Summary of Protection Layers</h3>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Layer</th>
+                            <th class="p-3 border border-slate-200">Mechanism</th>
+                            <th class="p-3 border border-slate-200">Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Secret Storage</td>
+                            <td class="p-3 border border-slate-200">Netlify Secrets Controller</td>
+                            <td class="p-3 border border-slate-200">Protects the HMAC key from exposure in logs, UI, or code.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Header Authenticity</td>
+                            <td class="p-3 border border-slate-200">HMAC-SHA256 Signature</td>
+                            <td class="p-3 border border-slate-200">Proves the request was generated by your authorized code and was not tampered with.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Replay Prevention</td>
+                            <td class="p-3 border border-slate-200"><code>X-Timestamp</code> &amp; <code>X-Nonce</code></td>
+                            <td class="p-3 border border-slate-200">Ensures an intercepted request cannot be reused later.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Client Auth</td>
+                            <td class="p-3 border border-slate-200">Short-lived JWT (from your app)</td>
+                            <td class="p-3 border border-slate-200">Ensures only your authorized frontend can invoke the signing function.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>
+                This design makes the header computationally infeasible to forge or guess. The remaining variable is whether Freshdesk's WAF can be configured to validate it instead of relying on source IP.
+            </p>
+            <p>
+                If this solution is not feasible because the third-party service (E.g. Freshdesk) rejects your approach to allow your specific header to lift the block and still insist they block on a IP-address block basis then scroll down to the alternate solution discussed later in this article.
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h3 class="text-xl font-bold text-slate-900 mb-3">A note about attackers who can spoof IP addresses: Can they actually be successful and how successful can they be?</h3>
+            <p>
+                Short answer: <strong class="font-semibold text-slate-900">No, an off-path attacker cannot just set their source IP to your whitelisted IP and complete a TCP/TLS session with Freshdesk.</strong> But <strong class="font-semibold text-slate-900">IP whitelisting is not authentication</strong> — it can be bypassed in specific scenarios, so you should never rely on it alone.
+            </p>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">Why simple IP spoofing usually fails</h4>
+            <p>Freshdesk’s WAF looks at the <strong class="font-semibold text-slate-900">TCP source IP</strong> of the connection. To “spoof” your whitelisted IP, an attacker would have to:</p>
+            <ol class="list-decimal pl-6 space-y-1 text-slate-700">
+                <li>Send packets with your whitelisted IP as the source.</li>
+                <li>Receive Freshdesk’s replies — because TCP requires a 3-way handshake.</li>
+                <li>Complete the TLS handshake and then authenticate with the Freshdesk API key.</li>
+            </ol>
+            <p class="mt-4">
+                If the attacker is <strong class="font-semibold text-slate-900">not on the network path</strong> between your proxy and Freshdesk, the replies go to your real whitelisted IP, not to them. They never see the SYN-ACK, so they cannot complete the handshake. Blind TCP spoofing requires guessing sequence numbers, which is impractical against modern stacks, and TLS makes it even harder.
+            </p>
+            <p>So from a random internet location: <strong class="font-semibold text-slate-900">spoofing the whitelisted IP alone will not work.</strong></p>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">When it <em>is</em> possible</h4>
+            <p>IP whitelisting can be bypassed if:</p>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">The attacker is on-path (a true MITM).</strong> If they sit between your proxy and Freshdesk, they can intercept return traffic and potentially inject packets with your source IP. But they still need to break TLS or steal your Freshdesk API key to do anything useful.</li>
+                <li><strong class="font-semibold text-slate-900">They compromise a host that legitimately uses that IP.</strong> For example, if they compromise your AWS NAT Gateway, a Netlify Function egress host, or any proxy in that IP range, they appear from the whitelisted IP naturally.</li>
+                <li><strong class="font-semibold text-slate-900">They use an open proxy or SSRF in a service hosted in that IP range.</strong></li>
+                <li><strong class="font-semibold text-slate-900">BGP hijacking / routing compromise.</strong> At a nation-state or large ISP level, an attacker could attract traffic for that IP prefix. This is rare but possible.</li>
+                <li><strong class="font-semibold text-slate-900">The WAF trusts a spoofable header</strong> like <code>X-Forwarded-For</code>. If Freshdesk incorrectly trusts client-supplied forwarding headers, then yes, an attacker could spoof the IP in a header. Most reputable WAFs use the actual TCP source IP, but it’s worth confirming.</li>
+            </ul>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">What this means for your design</h4>
+            <p>Knowing the whitelisted IP is not a secret — IPs are public routing information. Your security must not depend on the IP being unknown or unspoofable.</p>
+            <p>That’s why the earlier design uses:</p>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">TLS with certificate validation</strong> — prevents passive snooping and active MITM unless the attacker can forge a trusted certificate.</li>
+                <li><strong class="font-semibold text-slate-900">Short-lived JWT from your app → Netlify proxy</strong> — authenticates the client without exposing secrets.</li>
+                <li><strong class="font-semibold text-slate-900">HMAC signature + timestamp</strong> — proves integrity and origin for your own audit/WAF identification, and prevents replay if you validate it.</li>
+                <li><strong class="font-semibold text-slate-900">Freshdesk API key stored only server-side</strong> — never exposed to the browser.</li>
+                <li><strong class="font-semibold text-slate-900">Optional certificate pinning</strong> in your proxy for Freshdesk’s TLS certificate — makes MITM with a rogue CA much harder.</li>
+                <li><strong class="font-semibold text-slate-900">Secret rotation and monitoring</strong> — limits damage if a key is ever leaked.</li>
+            </ul>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">Important caveat about Freshdesk</h4>
+            <p>
+                Freshdesk does <strong class="font-semibold text-slate-900">not</strong> natively verify your custom HMAC header. Its API authentication is typically <strong class="font-semibold text-slate-900">HTTP Basic Auth with an API key over TLS</strong>. So on the proxy → Freshdesk leg, the real cryptographic protections are:
+            </p>
+            <ol class="list-decimal pl-6 space-y-1 text-slate-700">
+                <li>TLS (confidentiality + integrity).</li>
+                <li>Freshdesk API key (authorization).</li>
+            </ol>
+            <p class="mt-4">
+                The HMAC/JWT headers mainly protect the <strong class="font-semibold text-slate-900">client → your proxy</strong> leg and help with WAF identification. If you want cryptographic authentication all the way to Freshdesk, you’d need Freshdesk to support mTLS or request signing — check their enterprise/API docs. If they don’t, the best you can do is protect the API key and use TLS correctly.
+            </p>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">Practical bottom line</h4>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Off-path attacker spoofing your whitelisted IP:</strong> practically not feasible for a full TCP/TLS session.</li>
+                <li><strong class="font-semibold text-slate-900">On-path attacker or compromised whitelisted host:</strong> yes, they can appear from that IP, but they still need the Freshdesk API key or a valid JWT/HMAC secret.</li>
+                <li><strong class="font-semibold text-slate-900">Therefore:</strong> keep IP whitelisting only as an extra layer. Make your real authentication cryptographic — JWT for your app, server-side API key for Freshdesk, TLS everywhere, short expirations, and replay protection.</li>
+            </ul>
+            <p class="mt-4">
+                If Freshdesk’s WAF still blocks Netlify’s egress IPs, you may eventually need a static egress IP from a serverless service like AWS Lambda + NAT Gateway (not a VM). But even then, keep the JWT/HMAC and API-key controls so that knowing or spoofing the IP doesn’t grant access.
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">WAF blocking ≠ API authentication</h2>
+            <p>Freshdesk’s WAF blocks at the edge <strong class="font-semibold text-slate-900">before</strong> it evaluates your Freshdesk API key, HMAC header, or JWT. A WAF generally looks at:</p>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li>Source IP reputation</li>
+                <li>TLS fingerprint</li>
+                <li>Request rate</li>
+                <li>Headers / User-Agent</li>
+                <li>Payload heuristics</li>
+                <li>Bot signals</li>
+            </ul>
+            <p class="mt-4">
+                It does <strong class="font-semibold text-slate-900">not</strong> know your custom <code>X-Freshdesk-Signature</code> or <code>Authorization: Bearer &lt;JWT&gt;</code> unless Freshdesk has explicitly configured the WAF to trust that header. Most WAFs do not.
+            </p>
+            <p>So you cannot cryptographically force a third-party WAF to stop blocking you. You can only:</p>
+            <ol class="list-decimal pl-6 space-y-1 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Change the egress path</strong> so Freshdesk sees an IP/network it doesn’t block, or</li>
+                <li><strong class="font-semibold text-slate-900">Get Freshdesk to allowlist your account/API key/IP</strong> in their WAF, or</li>
+                <li><strong class="font-semibold text-slate-900">Fix the request pattern</strong> if the block is not IP-based.</li>
+            </ol>
+            <p class="mt-4">That’s the hard constraint.</p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">An alternate solution - sending your outbound traffic from Netlify through a Cloudflare worker</h2>
+            
+            <h3 class="text-xl font-semibold text-slate-900 mt-4 mb-2">Serverless edge proxy (Cloudflare Workers, Deno Deploy, etc.)</h3>
+            <p>If Netlify Edge Functions are still blocked, use a small serverless proxy on a network Freshdesk doesn’t block. Cloudflare Workers are a good fit:</p>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li>No VM</li>
+                <li>No public IP to whitelist</li>
+                <li>Free/cheap tier</li>
+                <li>Runs at the edge</li>
+                <li>Holds Freshdesk API key server-side</li>
+                <li>Verifies a JWT from your app</li>
+                <li>Adds one hop, but minimal</li>
+            </ul>
+            <p class="mt-4">
+                This is not the AWS/Azure public-IP VM solution you rejected. It’s a serverless function, similar to what you already have in Netlify, just on a different egress network.
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">Cryptographic design that avoids MITM and snooping</h2>
+            <p>Regardless of which proxy you use, the security model is:</p>
+            
+            <pre><code class="language-text">[Browser / Netlify App]
+   │  HTTPS + short-lived JWT
+   ▼
+[Proxy: Netlify Edge Function or Cloudflare Worker]
+   │  HTTPS + Freshdesk API key + optional HMAC
+   ▼
+[Freshdesk API]</code></pre>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Factor 1 — Short-lived JWT from your app to the proxy</h3>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li>Your app requests a JWT from an auth endpoint you control.</li>
+                <li>JWT is signed with RS256/ES256.</li>
+                <li>Expiry: 1–5 minutes.</li>
+                <li>Audience: your proxy.</li>
+                <li>Scope: e.g., <code>freshdesk:ticket:create</code>.</li>
+                <li>Include <code>jti</code> (nonce) to prevent replay.</li>
+                <li>Proxy verifies signature, expiry, audience, scope.</li>
+            </ul>
+            <p class="mt-2">This proves the request came from your authorized app, not a random client.</p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Factor 2 — Freshdesk API key stored only server-side</h3>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li>The proxy holds <code>FRESHDESK_API_KEY</code> in environment variables.</li>
+                <li>It sends it to Freshdesk using HTTP Basic Auth over TLS.</li>
+                <li>The browser never sees the API key.</li>
+            </ul>
+            <p class="mt-2">This is the second factor: something the server knows.</p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Optional integrity layer — HMAC signature</h3>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li>Proxy computes <code>HMAC-SHA256(method + path + timestamp + body, HMAC_SECRET)</code>.</li>
+                <li>Sends it as <code>X-Freshdesk-Signature</code> with <code>X-Freshdesk-Timestamp</code>.</li>
+                <li>Freshdesk may not validate it, but you can log it and show it to Freshdesk support as proof of legitimate origin.</li>
+                <li>If you ever build your own middleware, you can validate it to prevent tampering and replay.</li>
+            </ul>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">TLS</h3>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li>All traffic is HTTPS/TLS 1.2+.</li>
+                <li>Your proxy validates Freshdesk’s TLS certificate.</li>
+                <li>If possible, pin Freshdesk’s CA in your proxy.</li>
+                <li>This prevents passive snooping and most active MITM.</li>
+            </ul>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">Can a MITM spoof the whitelisted IP?</h2>
+            <p>Not practically, if they are off-path:</p>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li>TCP requires a 3-way handshake.</li>
+                <li>TLS requires a valid certificate.</li>
+                <li>If they spoof your source IP, Freshdesk’s replies go to your real IP, not to them.</li>
+                <li>They cannot complete the handshake or decrypt TLS without the certificate/keys.</li>
+            </ul>
+            <p class="mt-4">
+                If they are on-path or compromise a host that legitimately uses that IP, they can appear from it. But they still need the Freshdesk API key or a valid JWT to do anything useful. That’s why the crypto layer matters more than the IP.
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">Bottom line</h2>
+            <p>You cannot force Freshdesk’s WAF to stop blocking you with custom headers or crypto alone. The WAF is a separate control plane.</p>
+            <p>To avoid AWS/Azure public-IP whitelisting:</p>
+            <ol class="list-decimal pl-6 space-y-2 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">First</strong>, try Netlify Edge Functions instead of Netlify Functions — different egress, no new service.</li>
+                <li><strong class="font-semibold text-slate-900">If that fails</strong>, use a serverless edge proxy like Cloudflare Workers — no VM, no static IP, cheap, serverless.</li>
+                <li><strong class="font-semibold text-slate-900">In parallel</strong>, open a Freshdesk support ticket and ask them to allowlist your API key/account or adjust the WAF rule.</li>
+                <li><strong class="font-semibold text-slate-900">Always</strong> keep the cryptographic design: short-lived JWT from app → proxy, Freshdesk API key server-side, TLS everywhere, optional HMAC + timestamp for integrity and audit.</li>
+            </ol>
+            <p class="mt-4">
+                That gives you strong service-to-service authentication without relying on IP whitelisting as your security boundary.
+            </p>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-3xl font-extrabold text-slate-900 mb-6">Cloudflare solution:</h2>
+            <p>Here is a detailed elaboration on using Cloudflare Workers as a serverless edge proxy for your Freshdesk integration.</p>
+
+            <h3 class="text-2xl font-bold text-slate-900 mt-8 mb-4">Architecture: Cloudflare Worker as Secure Proxy</h3>
+            <pre><code class="language-text">[Browser / Netlify App]
+       │  HTTPS + Short-lived JWT (Factor 1)
+       ▼
+[Cloudflare Worker (Edge Proxy)]
+       │  - Verifies JWT signature, expiry, audience
+       │  - Holds Freshdesk API key server-side (Factor 2)
+       │  - Adds HMAC signature + timestamp
+       │  HTTPS + Basic Auth (API key:X) + custom headers
+       ▼
+[Freshdesk API]
+       WAF sees Cloudflare egress IPs (different network from Netlify/AWS)</code></pre>
+
+            <p class="mt-4">
+                <strong class="font-semibold text-slate-900">Why this works for the WAF block:</strong> Netlify Functions run on AWS Lambda, whose egress IPs Freshdesk is apparently blocking. Cloudflare Workers run on Cloudflare's global edge network, so requests to Freshdesk originate from Cloudflare's egress IP ranges — a completely different network path. This is not a static IP you manage; it's Cloudflare's shared egress pool, which Freshdesk's WAF generally does not block.
+            </p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Step 1: Set Up the Worker Project</h3>
+            <p>Install Wrangler CLI and initialize a project:</p>
+            <pre><code class="language-bash">npm install -g wrangler
+wrangler login
+mkdir freshdesk-proxy-worker && cd freshdesk-proxy-worker
+npm init -y</code></pre>
+            <p class="mt-2">Create <code>wrangler.toml</code>:</p>
+            <pre><code class="language-toml">name = "freshdesk-proxy"
+main = "src/index.js"
+compatibility_date = "2026-09-16"</code></pre>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Step 2: Store Secrets Securely</h3>
+            <p>Use Cloudflare Workers Secrets — encrypted values not visible in the dashboard or Wrangler config after creation:</p>
+            <pre><code class="language-bash">wrangler secret put FRESHDESK_API_KEY
+# Paste your Freshdesk API key (e.g., fdp_xxxxxxxx)
+
+wrangler secret put FRESHDESK_DOMAIN
+# Paste your subdomain (e.g., yourcompany.freshdesk.com)
+
+wrangler secret put JWT_SECRET
+# Paste a long random string used to verify client JWTs
+
+wrangler secret put HMAC_SECRET
+# Paste a long random string for HMAC signing</code></pre>
+            <p class="mt-2">
+                For local development, create a <code>.dev.vars</code> file with the same keys and placeholder values. Cloudflare Workers secrets are accessed through the <code>env</code> parameter in your fetch handler or via <code>import { env } from "cloudflare:workers"</code>.
+            </p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Step 3: Implement the Worker Code</h3>
+            <p>Here is the complete Worker implementation. Save as <code>src/index.js</code>:</p>
+
+            <pre><code class="language-javascript">// src/index.js
+
+// --- JWT verification (HMAC-SHA256) using Web Crypto ---
+async function verifyJWT(token, secret) {
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+
+  const [headerB64, payloadB64, signatureB64] = parts;
+
+  // Verify signature
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['verify']
+  );
+
+  const valid = await crypto.subtle.verify(
+    'HMAC',
+    key,
+    base64UrlToUint8Array(signatureB64),
+    new TextEncoder().encode(`${headerB64}.${payloadB64}`)
+  );
+  if (!valid) return null;
+
+  // Decode payload and check expiry / audience
+  const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
+  if (payload.exp && Date.now() / 1000 > payload.exp) return null;
+  if (payload.aud !== 'freshdesk-proxy') return null;
+
+  return payload;
+}
+
+function base64UrlToUint8Array(base64url) {
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  const pad = base64.length % 4;
+  const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+// --- HMAC signing for Freshdesk request integrity ---
+async function signRequest(method, path, timestamp, body, secret) {
+  const payload = `${method}\n${path}\n${timestamp}\n${body || ''}`;
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
+  return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// --- Main Worker handler ---
+export default {
+  async fetch(request, env) {
+    // Only allow POST and GET
+    if (!['POST', 'GET'].includes(request.method)) {
+      return new Response('Method not allowed', { status: 405 });
+    }
+
+    // --- Factor 1: Verify short-lived JWT from the client ---
+    const authHeader = request.headers.get('Authorization') || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) {
+      return new Response('Missing authorization token', { status: 401 });
+    }
+
+    const jwtPayload = await verifyJWT(token, env.JWT_SECRET);
+    if (!jwtPayload) {
+      return new Response('Invalid or expired token', { status: 401 });
+    }
+
+    // Optional: check scope from JWT payload
+    if (!jwtPayload.scope?.includes('freshdesk:ticket:create')) {
+      return new Response('Insufficient scope', { status: 403 });
+    }
+
+    // --- Build the Freshdesk request ---
+    const url = new URL(request.url);
+    const freshdeskPath = url.pathname; // e.g., /api/v2/tickets
+    const freshdeskUrl = `https://${env.FRESHDESK_DOMAIN}${freshdeskPath}${url.search}`;
+
+    const body = request.method === 'POST' ? await request.text() : undefined;
+    const timestamp = Date.now().toString();
+
+    // --- Factor 2: Freshdesk API key (HTTP Basic Auth) ---
+    // Freshdesk uses the API key as username and "X" as password
+    const authBasic = btoa(`${env.FRESHDESK_API_KEY}:X`);
+
+    // Optional HMAC signature for audit / integrity
+    const hmacSignature = await signRequest(
+      request.method,
+      freshdeskPath,
+      timestamp,
+      body,
+      env.HMAC_SECRET
+    );
+
+    // --- Forward to Freshdesk ---
+    const freshdeskResponse = await fetch(freshdeskUrl, {
+      method: request.method,
+      headers: {
+        'Authorization': `Basic ${authBasic}`,
+        'Content-Type': request.headers.get('Content-Type') || 'application/json',
+        'User-Agent': 'MyNetlifyApp-WorkerProxy/1.0',
+        'X-Proxy-Timestamp': timestamp,
+        'X-Proxy-Signature': hmacSignature,
+      },
+      body: body,
+    });
+
+    // --- Return response to client ---
+    const responseBody = await freshdeskResponse.text();
+    return new Response(responseBody, {
+      status: freshdeskResponse.status,
+      headers: {
+        'Content-Type': freshdeskResponse.headers.get('Content-Type') || 'application/json',
+        'Access-Control-Allow-Origin': '*', // Adjust to your Netlify domain in production
+      },
+    });
+  },
+};</code></pre>
+
+            <p class="mt-4"><strong class="font-semibold text-slate-900">Key points in the code:</strong></p>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li>The JWT is verified entirely in-Worker using Web Crypto (no external dependencies).</li>
+                <li>Freshdesk API key is never exposed to the client — it lives only in Workers Secrets.</li>
+                <li>The <code>X-Proxy-Signature</code> and <code>X-Proxy-Timestamp</code> headers travel to Freshdesk. Freshdesk's WAF will not validate them, but you can log them and present them to Freshdesk support as evidence of legitimate requests.</li>
+                <li>CORS headers allow your Netlify app to call the Worker. Replace <code>*</code> with your Netlify domain in production.</li>
+            </ul>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Step 4: Generate JWTs from Your App</h3>
+            <p>Your Netlify app (or a Netlify Function) must issue short-lived JWTs before calling the Worker. Here is a minimal Netlify Function example using <code>jsonwebtoken</code>:</p>
+
+            <pre><code class="language-javascript">// netlify/functions/auth.js
+const jwt = require('jsonwebtoken');
+
+exports.handler = async (event) => {
+  // Authenticate the user however you normally do (session, OAuth, etc.)
+  // Then issue a short-lived JWT scoped to the Freshdesk proxy:
+  const token = jwt.sign(
+    {
+      sub: 'user-123',
+      aud: 'freshdesk-proxy',
+      scope: ['freshdesk:ticket:create'],
+    },
+    process.env.JWT_SECRET, // Same secret as in the Worker
+    { expiresIn: '5m', algorithm: 'HS256' }
+  );
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ token }),
+  };
+};</code></pre>
+
+            <p class="mt-4">Your frontend then:</p>
+            <ol class="list-decimal pl-6 space-y-1 text-slate-700">
+                <li>Calls <code>/.netlify/functions/auth</code> to get a JWT.</li>
+                <li>Calls the Cloudflare Worker with <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+            </ol>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Step 5: Egress IP Behavior (Critical for WAF)</h3>
+            <p>This is the most important detail for your specific problem.</p>
+            <p>
+                <strong class="font-semibold text-slate-900">Cloudflare Workers do not use a static egress IP on the free or standard paid plans.</strong> Requests from Workers to external APIs originate from Cloudflare's shared edge egress pool — the same ranges published for Cloudflare's CDN infrastructure. You <strong class="font-semibold text-slate-900">cannot</strong> whitelist a single IP at Freshdesk for this.
+            </p>
+            <p>However, this is actually <strong class="font-semibold text-slate-900">good</strong> for your use case:</p>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li>Freshdesk's WAF is blocking AWS Lambda / Netlify egress ranges.</li>
+                <li>Cloudflare's egress ranges are a different network entirely.</li>
+                <li>Freshdesk likely does <strong class="font-semibold text-slate-900">not</strong> block Cloudflare's ranges because Cloudflare is a major CDN provider and blocking it would break many legitimate integrations.</li>
+            </ul>
+            <p class="mt-4"><strong class="font-semibold text-slate-900">If Freshdesk still blocks Cloudflare ranges</strong>, you have two options:</p>
+            <ol class="list-decimal pl-6 space-y-2 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Cloudflare Enterprise Egress Policies</strong> — Cloudflare offers dedicated egress IPs on enterprise plans. This gives you a stable IP you can whitelist at Freshdesk. It adds cost, but it is a serverless feature, not a VM.</li>
+                <li><strong class="font-semibold text-slate-900">Cloudflare Tunnel with a static IP</strong> — You can run a lightweight <code>cloudflared</code> connector on any host with a static IP (even a tiny $5 VPS). The Worker sends traffic through the tunnel, and Freshdesk sees the static IP of the tunnel endpoint. This is still lighter than a full proxy VM because the Worker handles all logic; the tunnel is just a network path.</li>
+            </ol>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Security Analysis</h3>
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">MITM and snooping resistance</h4>
+            <div class="overflow-x-auto my-4">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Layer</th>
+                            <th class="p-3 border border-slate-200">Protection</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Client → Worker</td>
+                            <td class="p-3 border border-slate-200">HTTPS + short-lived JWT (HS256). Token expires in 5 minutes; replay is impractical.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Worker → Freshdesk</td>
+                            <td class="p-3 border border-slate-200">HTTPS with TLS certificate validation by the Workers runtime. Freshdesk's certificate is validated automatically.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">API key</td>
+                            <td class="p-3 border border-slate-200">Stored in Workers Secrets, never exposed to the client or in logs.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">HMAC signature</td>
+                            <td class="p-3 border border-slate-200">Provides integrity for the request payload; can be validated if you ever build custom middleware.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Timestamp</td>
+                            <td class="p-3 border border-slate-200">Prevents replay if you later add server-side validation.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">What the Worker does <em>not</em> solve</h4>
+            <p>
+                The Worker does <strong class="font-semibold text-slate-900">not</strong> make Freshdesk's WAF validate your JWT or HMAC. The WAF will still evaluate the request based on source IP, rate, headers, and payload. The Worker solves the problem by <strong class="font-semibold text-slate-900">changing the source network</strong>, not by cryptographically forcing the WAF to accept you.
+            </p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Cost and Comparison</h3>
+            <div class="overflow-x-auto my-4">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Aspect</th>
+                            <th class="p-3 border border-slate-200">Cloudflare Worker</th>
+                            <th class="p-3 border border-slate-200">AWS/Azure VM Proxy</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Cost</td>
+                            <td class="p-3 border border-slate-200">Free tier: 100k requests/day. Paid: $5/month for 10M requests.</td>
+                            <td class="p-3 border border-slate-200">$10–$30+/month for a small VM, plus data transfer.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Cold start</td>
+                            <td class="p-3 border border-slate-200">None (V8 isolates, sub-millisecond).</td>
+                            <td class="p-3 border border-slate-200">VM is always running (or Lambda cold starts).</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Egress IP</td>
+                            <td class="p-3 border border-slate-200">Shared Cloudflare ranges (different from AWS).</td>
+                            <td class="p-3 border border-slate-200">Static IP you can whitelist.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Maintenance</td>
+                            <td class="p-3 border border-slate-200">Zero servers, zero patching.</td>
+                            <td class="p-3 border border-slate-200">OS updates, security patches, monitoring.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Global latency</td>
+                            <td class="p-3 border border-slate-200">Runs at the edge near the user.</td>
+                            <td class="p-3 border border-slate-200">Single region.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Secrets</td>
+                            <td class="p-3 border border-slate-200">Built-in encrypted secrets.</td>
+                            <td class="p-3 border border-slate-200">Manual (env vars, vault).</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>
+                The Worker is cheaper, has no cold starts, requires no server maintenance, and changes the egress network — which is exactly what you need to escape the WAF block.
+            </p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Limitations and Troubleshooting</h3>
+            <ol class="list-decimal pl-6 space-y-2 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Worker egress IPs are shared.</strong> If Freshdesk blocks Cloudflare ranges (unlikely but possible), you need Enterprise Egress Policies or a Cloudflare Tunnel with a static endpoint.</li>
+                <li><strong class="font-semibold text-slate-900">No request body streaming for large payloads.</strong> Workers have memory limits (128 MB on free tier). Freshdesk API payloads are small, so this is not a concern.</li>
+                <li><strong class="font-semibold text-slate-900">JWT secret rotation.</strong> If you rotate the JWT secret, you must update it in both the Netlify auth function and the Worker secret simultaneously. Plan for zero-downtime rotation by supporting two valid secrets during a transition window.</li>
+                <li><strong class="font-semibold text-slate-900">CORS.</strong> The Worker must return the correct <code>Access-Control-Allow-Origin</code> header. Set it to your Netlify domain, not <code>*</code>, in production.</li>
+                <li><strong class="font-semibold text-slate-900">Freshdesk rate limits.</strong> The Worker does not add rate limiting by default. If needed, use Workers KV or Durable Objects to implement per-user rate limits before forwarding to Freshdesk.</li>
+            </ol>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Summary</h3>
+            <p>Using a Cloudflare Worker as your Freshdesk proxy gives you:</p>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">A different egress network</strong> (Cloudflare edge, not AWS Lambda) — solves the WAF block without a VM.</li>
+                <li><strong class="font-semibold text-slate-900">Two-factor service authentication</strong> — short-lived JWT from your app + Freshdesk API key stored server-side.</li>
+                <li><strong class="font-semibold text-slate-900">Cryptographic integrity</strong> — HMAC signing and TLS end-to-end.</li>
+                <li><strong class="font-semibold text-slate-900">Zero server management</strong> — serverless, edge-deployed, cheap.</li>
+                <li><strong class="font-semibold text-slate-900">No static IP to manage</strong> — unless Freshdesk blocks Cloudflare ranges, in which case Enterprise Egress Policies or a Cloudflare Tunnel provide a static endpoint without a full VM.</li>
+            </ul>
+            <p class="mt-4">
+                This is the lightest architectural change that addresses both the WAF block and the security requirements, without introducing the cost, latency, or operational burden of an AWS/Azure public-IP proxy.
+            </p>
+        </section>
+
+        <footer class="mt-12 pt-6 border-t border-slate-200 text-slate-600 text-sm">
+            <h2 class="text-base font-bold text-slate-800 m-0">Author - Pranesh Sathyanarayan</h2>
+            <p class="mt-1 font-medium">Published First : 21 Oct 2026</p>
+            <p class="mt-2 text-xs italic">
+                AI agent disclosure - Deep Seek AI was used to generate content. Author used AI assistance but used original ideas, spec, used detailed prompts and guided the AI agent.
+            </p>
+            <p class="mt-2 text-xs text-slate-500">
+                "This work is dedicated to the public domain under CC0 1.0 Universal. You are free to copy, modify, distribute, and perform the work, even for commercial purposes, all without asking permission."
+            </p>
+        </footer>
+
+    </main>
+</body>
+</html>
