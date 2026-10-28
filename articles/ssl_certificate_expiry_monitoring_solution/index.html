@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSL Certificate Expiry Monitoring Solution</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <!-- KaTeX for math typesetting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        code, pre {
+            font-family: 'Fira Code', monospace;
+        }
+        .prose pre {
+            background-color: #0d1117;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .prose pre code.hljs, 
+        .prose pre code[class*="language-"] {
+            color: #e2e8f0;
+        }
+        .prose code:not(pre code) {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+            border: 1px solid #cbd5e1;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+    <main class="max-w-4xl mx-auto bg-white p-6 sm:p-10 lg:p-12 rounded-xl shadow-sm border border-slate-200 prose prose-slate lg:prose-lg max-w-none">
+        
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-6">SSL Certificate Expiry Monitoring Solution[cite: 4]</h1>
+
+        <div class="overflow-x-auto my-6">
+            <table class="w-full text-left border-collapse border border-slate-200">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-800">
+                        <th class="p-3 border border-slate-200">Attribute</th>
+                        <th class="p-3 border border-slate-200">Details</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 text-slate-700">
+                    <tr>
+                        <td class="p-3 border border-slate-200 font-semibold">Author</td>
+                        <td class="p-3 border border-slate-200">Pranesh Sathyanarayan[cite: 4]</td>
+                    </tr>
+                    <tr>
+                        <td class="p-3 border border-slate-200 font-semibold">Team</td>
+                        <td class="p-3 border border-slate-200">Masked[cite: 4]</td>
+                    </tr>
+                    <tr>
+                        <td class="p-3 border border-slate-200 font-semibold">Platform</td>
+                        <td class="p-3 border border-slate-200">Azure Serverless (PaaS - Timer Trigger)[cite: 4]</td>
+                    </tr>
+                    <tr>
+                        <td class="p-3 border border-slate-200 font-semibold">Target Email</td>
+                        <td class="p-3 border border-slate-200"><code>masked</code>[cite: 4]</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">📌 Overview & Purpose</h2>
+            <p class="text-lg text-slate-600 leading-relaxed">
+                This solution provides automated monitoring and reporting for SSL/TLS certificate expiration dates across all publicly accessible web domains managed for Managed Services clients[cite: 4].
+            </p>
+            <p class="mt-4">
+                The monitoring is executed on a scheduled basis via a serverless <strong class="font-semibold text-slate-900">Azure Functions (Timer Trigger)</strong> setup[cite: 4]. If any certificate is found to be expiring within the defined warning threshold (<strong class="font-semibold text-slate-900">60 days by default</strong>), an automated HTML report is dispatched via SendGrid to the infrastructure operations team[cite: 4].
+            </p>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">☁️ Azure Resource Metadata</h2>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Configuration Property</th>
+                            <th class="p-3 border border-slate-200">Resource Value / Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Azure Subscription</td>
+                            <td class="p-3 border border-slate-200"><code>Masked</code>[cite: 4]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Resource Group</td>
+                            <td class="p-3 border border-slate-200"><code>SSLCertificateMonitor</code>[cite: 4]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Function App Name</td>
+                            <td class="p-3 border border-slate-200"><code>certmonitor</code>[cite: 4]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Storage Account</td>
+                            <td class="p-3 border border-slate-200"><code>sslcertificatemonitb84b</code>[cite: 4]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Storage Share Quota</td>
+                            <td class="p-3 border border-slate-200">1 GB File Share[cite: 4]</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">📁 File Structure & Component Overview</h2>
+            <p>The Timer Trigger function resides under <code>site/wwwroot/TimerTriggerforSSLexpiry/</code> inside the Azure Storage File Share[cite: 4]:</p>
+            <pre><code class="language-text">TimerTriggerforSSLexpiry/
+├── run.ps1                   # Main PowerShell script (Execution logic & email rendering)
+├── function.json             # Function definition & NCRONTAB schedule configuration
+├── URL loader list.txt       # Master list of client domains to monitor
+└── ExecutionLog.txt          # File log for tracking execution runs and runtime errors</code></pre>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">⚙️ Managed Files & Configuration</h2>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">1. Master URL Feed (<code>URL loader list.txt</code>)</h3>
+            <blockquote class="border-l-4 border-slate-400 pl-4 italic text-slate-700 my-4">
+                <strong class="not-italic font-semibold text-slate-900">Location:</strong> <code>sslcertificatemonitb84b</code> > <strong class="not-italic font-semibold text-slate-900">File share</strong> > <code>site/wwwroot/TimerTriggerforSSLexpiry/URL loader list.txt</code>[cite: 4]
+            </blockquote>
+            <p>This file contains the list of target domain names to inspect during each execution[cite: 4].</p>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">Rules for Updating:</h4>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Segregation:</strong> Entries are organized by client name using <code>###</code> headers (e.g., <code>### CLIENT1</code>)[cite: 4].</li>
+                <li><strong class="font-semibold text-slate-900">Commenting Out Entries:</strong> Any line matching or starting with <code>^###</code> or <code>#</code> is ignored by the parser script[cite: 4].</li>
+                <li><strong class="font-semibold text-slate-900">Adding New Sites:</strong> Simply insert the raw domain or hostname on a new line without any <code>#</code> prefix[cite: 4].</li>
+            </ul>
+
+            <pre><code class="language-text">### client1
+masked1.com
+masked2.com
+
+### client2
+masked3.com
+masked4.com</code></pre>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">2. Schedule Configuration (<code>function.json</code>)</h3>
+            <blockquote class="border-l-4 border-slate-400 pl-4 italic text-slate-700 my-4">
+                <strong class="not-italic font-semibold text-slate-900">Location:</strong> <code>sslcertificatemonitb84b</code> > <strong class="not-italic font-semibold text-slate-900">File share</strong> > <code>site/wwwroot/TimerTriggerforSSLexpiry/function.json</code>[cite: 4]
+            </blockquote>
+            <p>The execution schedule uses standard <strong class="font-semibold text-slate-900">NCRONTAB</strong> expressions configured in the function binding[cite: 4]:</p>
+
+            <pre><code class="language-json">{
+  "bindings": [
+    {
+      "name": "Timer",
+      "type": "timerTrigger",
+      "direction": "in",
+      "schedule": "0 0 8 * * MON"
+    }
+  ]
+}</code></pre>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 my-6 rounded-r-md">
+                <p class="font-bold text-blue-900 m-0">💡 Schedule Note:</p>
+                <p class="text-blue-800 m-0 mt-1"><code>"0 0 8 * * MON"</code> triggers the function every <strong class="font-semibold text-slate-900">Monday at 08:00 AM UTC</strong>[cite: 4].</p>
+            </div>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">3. Execution Logging (<code>ExecutionLog.txt</code>)</h3>
+            <blockquote class="border-l-4 border-slate-400 pl-4 italic text-slate-700 my-4">
+                <strong class="not-italic font-semibold text-slate-900">Location:</strong> <code>sslcertificatemonitb84b</code> > <strong class="not-italic font-semibold text-slate-900">File share</strong> > <code>site/wwwroot/TimerTriggerforSSLexpiry/ExecutionLog.txt</code>[cite: 4]
+            </blockquote>
+            <p>Logs all operation details, connection timeouts, TLS handshake failures, or network status errors during script execution[cite: 4].</p>
+
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 my-6 rounded-r-md">
+                <p class="font-bold text-amber-900 m-0">💡 Troubleshooting Tip:</p>
+                <p class="text-amber-800 m-0 mt-1">If automated weekly emails are missing, inspect <code>ExecutionLog.txt</code> to verify if connection timeouts or invalid hosts halted the function run[cite: 4].</p>
+            </div>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">📧 Notifications & Configuration</h2>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Parameter</th>
+                            <th class="p-3 border border-slate-200">Current Value / Settings</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Recipient Email (<code>$To</code>)</td>
+                            <td class="p-3 border border-slate-200"><code>masked@masked.com</code>[cite: 4]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Sender Email (<code>$From</code>)</td>
+                            <td class="p-3 border border-slate-200"><code>no-reply@masked.com</code>[cite: 4]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">SendGrid API Key</td>
+                            <td class="p-3 border border-slate-200">Loaded dynamically from App Settings: <code>$env:SENDGRID_API_KEY</code>[cite: 4]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Expiration Warning Threshold</td>
+                            <td class="p-3 border border-slate-200">60 days (<code>$ExpirationDays = 60</code>)[cite: 4]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">TCP Timeout Limit</td>
+                            <td class="p-3 border border-slate-200">40 seconds (<code>$timeoutMs = 40000</code>)[cite: 4]</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">💻 Script Architecture & Source Code (<code>run.ps1</code>)</h2>
+            <p>Below is the complete PowerShell script executed by the Timer Trigger. It reads the target domain list, initiates direct TCP/SSL stream handshakes to inspect certificate validity, and renders a responsive HTML email report sent via SendGrid REST API[cite: 4].</p>
+
+            <pre><code class="language-powershell"># Input bindings are passed in via param block.
+param($Timer)
+
+# 1. Resolve relative paths using $PSScriptRoot (Azure Function execution root)
+$scriptPath = $PSScriptRoot
+$sitesFile  = Join-Path -Path $scriptPath -ChildPath "URL loader list.txt"
+
+if (Test-Path $sitesFile) {
+    $sites = Get-Content $sitesFile
+} else {
+    Write-Error "Site list file not found at: $sitesFile"
+    return
+}
+
+$validsites = $sites | Where-Object { $_ -and $_ -notmatch '^###' }
+
+$ExpirationDays = 60
+$timeoutMs      = 40000
+
+# 2. Fetch SendGrid API Key from Azure Function App Settings (Environment Variable)
+$APIKEY = $env:SENDGRID_API_KEY
+$From   = "no-reply@masked.com"
+$To     = "masked@masked.com"
+
+function Send-EmailWithSendGrid {
+    param (
+        [Parameter(Mandatory=$true)][string] $From,
+        [Parameter(Mandatory=$true)][string] $To,
+        [Parameter(Mandatory=$true)][string] $ApiKey,
+        [Parameter(Mandatory=$true)][string] $Subject,
+        [Parameter(Mandatory=$true)][string] $Body
+    )
+ 
+    $headers = @{
+        "Authorization" = "Bearer $ApiKey"
+        "Content-Type"  = "application/json"
+    }
+ 
+    $jsonRequest = [ordered]@{
+        personalizations = @(
+            @{
+                to      = @(@{ email = $To })
+                subject = $Subject
+            }
+        )
+        from    = @{ email = $From }
+        content = @(
+            @{
+                type  = "text/html"
+                value = $Body
+            }
+        )
+    } | ConvertTo-Json -Depth 10
+
+    Invoke-RestMethod -Uri "https://api.sendgrid.com/v3/mail/send" -Method Post -Headers $headers -Body $jsonRequest
+}
+
+# Initialize dynamic string holder
+$tableRows = ""
+
+# Loop through all valid domains
+# any custom port can have the port value replaced as below
+foreach ($i in $validsites) {
+    $port = '443'
+    if ($i -match 'masked-8984.com') {
+        $port = '8984'
+    }
+
+    $certExpiresIn  = $null
+    $expirationDate = $null
+    $certname       = $null
+    $thumbprint     = $null
+    $issuer         = $null
+
+    try {
+        $request = [System.Net.Sockets.TcpClient]::new($i, $port)
+        $stream  = [System.Net.Security.SslStream]::new($request.GetStream())
+        $stream.AuthenticateAsClient($i)
+        
+        $certname       = $stream.RemoteCertificate.Subject
+        $issuer         = $stream.RemoteCertificate.Issuer
+        $thumbprint     = $stream.RemoteCertificate.Thumbprint
+        $effectiveDate  = $stream.RemoteCertificate.GetEffectiveDateString() -as [datetime]
+        $expirationDate = $stream.RemoteCertificate.GetExpirationDateString() -as [datetime]
+
+        [int]$certExpiresIn = (New-TimeSpan -Start (Get-Date) -End $expirationDate).Days
+        
+        Write-Output "Checked $i - Expires in: $certExpiresIn days"
+    }
+    catch {
+        Write-Warning "URL check error for ${i}: $_"
+        continue
+    }
+
+    # If certificate expires within threshold, append table row
+    if ($null -ne $certExpiresIn -and $certExpiresIn -le $ExpirationDays -and $certExpiresIn -ge 0) {
+        $tableRows += @"
+&lt;tr&gt;
+    &lt;td style="padding: 8px 10px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #323130; border-bottom: 1px solid #E1DFDD;"&gt;$certExpiresIn days&lt;/td&gt;
+    &lt;td style="padding: 8px 10px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #323130; border-bottom: 1px solid #E1DFDD;"&gt;$i&lt;/td&gt;
+    &lt;td style="padding: 8px 10px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #323130; font-weight: bold; border-bottom: 1px solid #E1DFDD;"&gt;$certname&lt;/td&gt;
+    &lt;td style="padding: 8px 10px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #323130; border-bottom: 1px solid #E1DFDD;"&gt;$($expirationDate.ToString('dd/MM/yyyy HH:mm'))&lt;/td&gt;
+    &lt;td style="padding: 8px 10px; font-family: Consolas, 'Courier New', monospace; font-size: 11px; color: #605E5C; border-bottom: 1px solid #E1DFDD;"&gt;$thumbprint&lt;/td&gt;
+    &lt;td style="padding: 8px 10px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #323130; border-bottom: 1px solid #E1DFDD;"&gt;$issuer&lt;/td&gt;
+&lt;/tr&gt;
+"@
+    }
+}
+
+# --- Construct Email Output (After processing all domains) ---
+$dateforsubject = Get-Date -Format "dd/MM/yyyy"
+$messagetitle   = "Weekly Certificate Status report for $dateforsubject"
+
+$headerhtml = @"
+&lt;!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"&gt;
+&lt;html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"&gt;
+&lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=us-ascii" /&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;
+    &lt;!--[if gte mso 9]&gt;
+    &lt;xml&gt;
+      &lt;o:OfficeDocumentSettings&gt;
+        &lt;o:AllowPNG/&gt;
+        &lt;o:PixelsPerInch&gt;96&lt;/o:PixelsPerInch&gt;
+      &lt;/o:OfficeDocumentSettings&gt;
+    &lt;/xml&gt;
+    &lt;![endif]--&gt;
+&lt;/head&gt;
+&lt;body style="margin: 0; padding: 0; background-color: #F3F2F1; font-family: 'Segoe UI', Arial, sans-serif;"&gt;
+    &lt;table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F3F2F1; table-layout: fixed;"&gt;
+        &lt;tr&gt;
+            &lt;td align="center" style="padding: 20px 10px;"&gt;
+                &lt;!--[if (gte mso 9)|(IE)]&gt;
+                &lt;table align="center" border="0" cellspacing="0" cellpadding="0" width="850"&gt;
+                &lt;tr&gt;
+                &lt;td&gt;
+                &lt;![endif]--&gt;
+                &lt;table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 850px; background-color: #FFFFFF; border: 1px solid #EDEBE9;"&gt;
+                    &lt;tr&gt;
+                        &lt;td style="background-color: #0078D4; padding: 18px 24px;"&gt;
+                            &lt;h2 style="margin: 0; color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: bold;"&gt;
+                                Weekly Certificate Status Report
+                            &lt;/h2&gt;
+                            &lt;p style="margin: 4px 0 0 0; color: #DEECF9; font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px;"&gt;
+                                Generated on $dateforsubject
+                            &lt;/p&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;
+                    &lt;tr&gt;
+                        &lt;td style="padding: 24px;"&gt;
+                            &lt;table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; text-align: left;"&gt;
+                                &lt;thead&gt;
+                                    &lt;tr style="background-color: #F3F2F1;"&gt;
+                                        &lt;th style="padding: 10px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold; color: #323130; border-bottom: 2px solid #0078D4; text-align: left;"&gt;Expiry&lt;/th&gt;
+                                        &lt;th style="padding: 10px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold; color: #323130; border-bottom: 2px solid #0078D4; text-align: left;"&gt;Domain Checked&lt;/th&gt;
+                                        &lt;th style="padding: 10px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold; color: #323130; border-bottom: 2px solid #0078D4; text-align: left;"&gt;Certificate Name&lt;/th&gt;
+                                        &lt;th style="padding: 10px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold; color: #323130; border-bottom: 2px solid #0078D4; text-align: left;"&gt;Expiry Date (UTC)&lt;/th&gt;
+                                        &lt;th style="padding: 10px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold; color: #323130; border-bottom: 2px solid #0078D4; text-align: left;"&gt;Thumbprint&lt;/th&gt;
+                                        &lt;th style="padding: 10px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold; color: #323130; border-bottom: 2px solid #0078D4; text-align: left;"&gt;Issuer&lt;/th&gt;
+                                    &lt;/tr&gt;
+                                &lt;/thead&gt;
+                                &lt;tbody&gt;
+"@
+
+$footerhtml = @"
+                                &lt;/tbody&gt;
+                            &lt;/table&gt;
+                            &lt;br /&gt;
+                            &lt;table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FFF4CE;"&gt;
+                                &lt;tr&gt;
+                                    &lt;td width="4" style="background-color: #FFB900;"&gt;&lt;/td&gt;
+                                    &lt;td style="padding: 12px 16px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #323130; line-height: 1.4;"&gt;
+                                        &lt;strong&gt;Note:&lt;/strong&gt; If no certificates appear above, there are no SSL/TLS certificates expiring within 60 days.
+                                    &lt;/td&gt;
+                                &lt;/tr&gt;
+                            &lt;/table&gt;
+                            &lt;br /&gt;
+                            &lt;table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-top: 1px solid #EDEBE9;"&gt;
+                                &lt;tr&gt;
+                                    &lt;td style="padding-top: 12px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #A19F9D; text-align: center;"&gt;
+                                        Email and Certificate Monitoring Solution | Designed &amp; Managed by &lt;strong&gt;Masked&lt;/strong&gt;
+                                    &lt;/td&gt;
+                                &lt;/tr&gt;
+                            &lt;/table&gt;
+                        &lt;/td&gt;
+                    &lt;/tr&gt;
+                &lt;/table&gt;
+                &lt;!--[if (gte mso 9)|(IE)]&gt;
+                &lt;/td&gt;
+                &lt;/tr&gt;
+                &lt;/table&gt;
+                &lt;![endif]--&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/table&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+"@
+
+# Construct full body
+$finalhtml = $headerhtml + $tableRows + $footerhtml
+
+# Send email using SendGrid
+if ($APIKEY) {
+    Send-EmailWithSendGrid -From $From -To $To -ApiKey $APIKEY -Body $finalhtml -Subject $messagetitle
+    Write-Output "Email successfully sent via SendGrid."
+} else {
+    Write-Error "SendGrid API key missing. Please set SENDGRID_API_KEY in App Settings."
+}</code></pre>
+        </section>
+
+        <footer class="mt-12 pt-6 border-t border-slate-200 text-slate-600 text-sm">
+            <h2 class="text-base font-bold text-slate-800 m-0">Author - Pranesh Sathyanarayan[cite: 4]</h2>
+            <p class="mt-1 font-medium">Published First : 27 Oct 2026[cite: 4]</p>
+            <p class="mt-2 text-xs italic">
+                AI agent disclosure - no AI used to generate content, gemini AI was used only to perform markdown formatting and beautification[cite: 4].
+            </p>
+            <p class="mt-2 text-xs text-slate-500">
+                "This work is dedicated to the public domain under CC0 1.0 Universal. You are free to copy, modify, distribute, and perform the work, even for commercial purposes, all without asking permission."[cite: 4]
+            </p>
+        </footer>
+
+    </main>
+</body>
+</html>
