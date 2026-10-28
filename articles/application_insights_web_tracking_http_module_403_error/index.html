@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Insights Web Tracking HTTP Module Causes 403 Forbidden Error</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <!-- KaTeX for math typesetting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        code, pre {
+            font-family: 'Fira Code', monospace;
+        }
+        .prose pre {
+            background-color: #0d1117;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .prose pre code.hljs, 
+        .prose pre code[class*="language-"] {
+            color: #e2e8f0;
+        }
+        .prose code:not(pre code) {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+            border: 1px solid #cbd5e1;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+    <main class="max-w-4xl mx-auto bg-white p-6 sm:p-10 lg:p-12 rounded-xl shadow-sm border border-slate-200 prose prose-slate lg:prose-lg max-w-none">
+        
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-6">Application Insights Web Tracking HTTP Module Causes 403 Forbidden Error</h1>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">📋 Introduction & Overview</h2>
+            <p class="text-lg text-slate-600 leading-relaxed">
+                When host applications deployed on Azure App Service attempt to interact with Azure Blob Storage containers, outbound HTTP requests may fail unexpectedly with an <code>HTTP 403 Forbidden</code> response.
+            </p>
+            <p class="mt-4">
+                This issue is caused by the <strong class="font-semibold text-slate-900">Application Insights Dependency Tracking HTTP Module</strong> (<code>DependencyTrackingTelemetryModule</code>). By default, this module injects request correlation headers into outgoing HTTP traffic to track telemetry across services. However, because Azure Blob Storage relies on strict authentication signatures (such as Shared Access Signatures or Shared Key authorization), modifying headers <strong class="font-semibold text-slate-900">after</strong> the request signature is computed causes Azure Storage to reject the request as unauthorized.
+            </p>
+            <p class="mt-4">
+                This document details the affected infrastructure, error log diagnostics, root cause explanation, and the configuration steps required to resolve the issue without disabling overall Application Insights telemetry.
+            </p>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">📌 Affected Azure Resources</h2>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Resource Type</th>
+                            <th class="p-3 border border-slate-200">Resource Name</th>
+                            <th class="p-3 border border-slate-200">Purpose / Function</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Staging App Services</td>
+                            <td class="p-3 border border-slate-200"><code>masked</code></td>
+                            <td class="p-3 border border-slate-200">Staging web application hosts</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Storage Account</td>
+                            <td class="p-3 border border-slate-200"><code>masked</code></td>
+                            <td class="p-3 border border-slate-200">Target storage account hosting candidate documents</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Target Container</td>
+                            <td class="p-3 border border-slate-200"><code>masked</code></td>
+                            <td class="p-3 border border-slate-200">Destination blob container for uploaded files</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">🚨 Diagnostics & Error Logs</h2>
+            <p>The failure occurs during file upload operations within the application workflow.</p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Application Error Logs</h3>
+            <pre><code class="language-text">2020-08-26T07:17:22 PID[2360] Error 5108 07:17:22 ERROR exception from InitializeContainer: The remote server returned an error: (403) Forbidden.
+2020-08-26T07:17:22 PID[2360] Information 5108 07:17:22 INFO Candidate Profile Name /61dd00a4-5da5-4dfc-8b92-a69ef036a7a6.docx||Prod_emailbackup (1).docx?26/08/2020 07:17:22
+2020-08-26T07:17:22 PID[2360] Error 5108 07:17:22 ERROR UploadFileToAzure exception: The remote server returned an error: (403) Forbidden.</code></pre>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Request Flow & Failure Sequence</h3>
+            <ol class="list-decimal pl-6 space-y-2 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">User Action:</strong> App initiates file upload via <code>POST</code> request to:<br><code>https://masked/api/sitecore/candidateresumes/uploadfiles</code></li>
+                <li><strong class="font-semibold text-slate-900">Outbound Call:</strong> App Service attempts to write to Azure Storage:<br><code>https://masked.blob.core.windows.net:443/2020-hirecraft?restype=container</code></li>
+                <li><strong class="font-semibold text-slate-900">Response:</strong> Azure Storage responds with <code>HTTP 403 Forbidden</code>.</li>
+            </ol>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">🔍 Root Cause Analysis</h2>
+            <p>
+                The <strong class="font-semibold text-slate-900">Application Insights Web Tracking HTTP Module</strong> attaches distributed tracing correlation headers (such as <code>Request-Id</code> or <code>traceparent</code>) to outbound HTTP traffic.
+            </p>
+            <p class="mt-4">
+                When the Azure Storage SDK generates an authentication signature, it calculates the signature based on a snapshot of the HTTP request headers. If the Application Insights module injects additional correlation headers into the request <strong class="font-semibold text-slate-900">after</strong> this signature generation step, the request received by <code>core.windows.net</code> fails signature verification, triggering an <code>HTTP 403 Forbidden</code> exception.
+            </p>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 my-6 rounded-r-md">
+                <p class="font-bold text-blue-900 m-0">💡 Tip:</p>
+                <p class="text-blue-800 m-0 mt-1">For deeper insight into how dependency tracking works in ASP.NET application monitoring, refer to the <a href="https://docs.microsoft.com/en-us/azure/azure-monitor/app/asp-net-dependencies" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-medium">Microsoft Azure Monitor Dependency Tracking Documentation</a>.</p>
+            </div>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">🛠️ Resolution Steps</h2>
+            <p>To fix this issue, update <code>ApplicationInsights.config</code> to instruct the <code>DependencyTrackingTelemetryModule</code> to exclude domain-level correlation headers for outbound requests directed to Azure Storage endpoints (<code>core.windows.net</code>).</p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Step-by-Step Fix Procedure</h3>
+            <ol class="list-decimal pl-6 space-y-2 text-slate-700">
+                <li>Navigate to the <strong class="font-semibold text-slate-900">Azure Portal</strong> and open your <strong class="font-semibold text-slate-900">App Service</strong>.</li>
+                <li>Under <strong class="font-semibold text-slate-900">Development Tools</strong> in the left sidebar, click <strong class="font-semibold text-slate-900">App Service Editor (Preview)</strong> and select <strong class="font-semibold text-slate-900">Go</strong>.</li>
+                <li>In the file explorer, navigate to <code>wwwroot/ApplicationInsights.config</code>.</li>
+                <li>Locate the standard telemetry module block:
+<pre><code class="language-xml">&lt;Add Type="Microsoft.ApplicationInsights.DependencyCollector.DependencyTrackingTelemetryModule, Microsoft.AI.DependencyCollector"&gt;
+&lt;/Add&gt;</code></pre>
+                </li>
+                <li>Replace it with the excluded domains configuration:
+<pre><code class="language-xml">&lt;Add Type="Microsoft.ApplicationInsights.DependencyCollector.DependencyTrackingTelemetryModule, Microsoft.AI.DependencyCollector"&gt;
+    &lt;ExcludeComponentCorrelationHttpHeadersOnDomains&gt;
+        &lt;Add&gt;core.windows.net&lt;/Add&gt;
+    &lt;/ExcludeComponentCorrelationHttpHeadersOnDomains&gt;
+&lt;/Add&gt;</code></pre>
+                </li>
+                <li>Save the file.</li>
+                <li>Restart the App Service (<strong class="font-semibold text-slate-900">Stop</strong> and then <strong class="font-semibold text-slate-900">Start</strong>) to ensure the configuration changes take effect.</li>
+            </ol>
+
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 my-6 rounded-r-md">
+                <p class="font-bold text-amber-900 m-0">⚠️ Important Note:</p>
+                <p class="text-amber-800 m-0 mt-1">Excluding <code>core.windows.net</code> stops the injection of extra headers on requests to Azure Storage (preventing signature mismatch errors) while continuing to collect essential dependency performance telemetry across all other outbound services.</p>
+            </div>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">📚 References & Resources</h2>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li>🐙 <strong class="font-semibold text-slate-900">GitHub Issue Tracker:</strong> <a href="https://github.com/Azure/azure-sdk-for-net/issues/3460" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-medium">Azure SDK for .NET Issue #3460</a></li>
+                <li>❓ <strong class="font-semibold text-slate-900">Microsoft Q&amp;A Thread:</strong> <a href="https://docs.microsoft.com/en-us/answers/questions/77707/app-insights-dependency-tracking-caused-http-403-f.html" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-medium">App Insights Dependency Tracking Caused 403 Error Solution</a></li>
+            </ul>
+        </section>
+
+        <footer class="mt-12 pt-6 border-t border-slate-200 text-slate-600 text-sm">
+            <h2 class="text-base font-bold text-slate-800 m-0">Author - Pranesh Sathyanarayan</h2>
+            <p class="mt-1 font-medium">Published First : 27 Oct 2026</p>
+            <p class="mt-2 text-xs italic">
+                AI agent disclosure - no AI used to generate content, gemini AI was used only to perform markdown formatting and beautification.
+            </p>
+            <p class="mt-2 text-xs text-slate-500">
+                "This work is dedicated to the public domain under CC0 1.0 Universal. You are free to copy, modify, distribute, and perform the work, even for commercial purposes, all without asking permission."
+            </p>
+        </footer>
+
+    </main>
+</body>
+</html>
