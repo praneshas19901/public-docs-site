@@ -45,7 +45,7 @@
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen py-10 px-4 sm:px-6 lg:px-8">
     <main class="max-w-4xl mx-auto bg-white p-6 sm:p-10 lg:p-12 rounded-xl shadow-sm border border-slate-200 prose prose-slate lg:prose-lg max-w-none">
         
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-6">SSL Certificate Expiry Monitoring Solution[cite: 4]</h1>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-6">SSL Certificate Expiry Monitoring Solution</h1>
 
         <div class="overflow-x-auto my-6">
             <table class="w-full text-left border-collapse border border-slate-200">
@@ -58,19 +58,19 @@
                 <tbody class="divide-y divide-slate-200 text-slate-700">
                     <tr>
                         <td class="p-3 border border-slate-200 font-semibold">Author</td>
-                        <td class="p-3 border border-slate-200">Pranesh Sathyanarayan[cite: 4]</td>
+                        <td class="p-3 border border-slate-200">Pranesh Sathyanarayan</td>
                     </tr>
                     <tr>
                         <td class="p-3 border border-slate-200 font-semibold">Team</td>
-                        <td class="p-3 border border-slate-200">Masked[cite: 4]</td>
+                        <td class="p-3 border border-slate-200">Masked</td>
                     </tr>
                     <tr>
                         <td class="p-3 border border-slate-200 font-semibold">Platform</td>
-                        <td class="p-3 border border-slate-200">Azure Serverless (PaaS - Timer Trigger)[cite: 4]</td>
+                        <td class="p-3 border border-slate-200">Azure Serverless (PaaS - Timer Trigger)</td>
                     </tr>
                     <tr>
                         <td class="p-3 border border-slate-200 font-semibold">Target Email</td>
-                        <td class="p-3 border border-slate-200"><code>masked</code>[cite: 4]</td>
+                        <td class="p-3 border border-slate-200"><code>masked</code></td>
                     </tr>
                 </tbody>
             </table>
@@ -81,10 +81,10 @@
         <section class="mb-10">
             <h2 class="text-2xl font-bold text-slate-900 mb-4">📌 Overview & Purpose</h2>
             <p class="text-lg text-slate-600 leading-relaxed">
-                This solution provides automated monitoring and reporting for SSL/TLS certificate expiration dates across all publicly accessible web domains managed for Managed Services clients[cite: 4].
+                This solution provides automated monitoring and reporting for SSL/TLS certificate expiration dates across all publicly accessible web domains managed for Managed Services clients.
             </p>
             <p class="mt-4">
-                The monitoring is executed on a scheduled basis via a serverless <strong class="font-semibold text-slate-900">Azure Functions (Timer Trigger)</strong> setup[cite: 4]. If any certificate is found to be expiring within the defined warning threshold (<strong class="font-semibold text-slate-900">60 days by default</strong>), an automated HTML report is dispatched via SendGrid to the infrastructure operations team[cite: 4].
+                The monitoring is executed on a scheduled basis via a serverless <strong class="font-semibold text-slate-900">Azure Functions (Timer Trigger)</strong> setup. If any certificate is found to be expiring within the defined warning threshold (<strong class="font-semibold text-slate-900">60 days by default</strong>), an automated HTML report is dispatched via SendGrid to the infrastructure operations team.
             </p>
         </section>
 
@@ -103,23 +103,23 @@
                     <tbody class="divide-y divide-slate-200 text-slate-700">
                         <tr>
                             <td class="p-3 border border-slate-200 font-semibold">Azure Subscription</td>
-                            <td class="p-3 border border-slate-200"><code>Masked</code>[cite: 4]</td>
+                            <td class="p-3 border border-slate-200"><code>Masked</code></td>
                         </tr>
                         <tr>
                             <td class="p-3 border border-slate-200 font-semibold">Resource Group</td>
-                            <td class="p-3 border border-slate-200"><code>SSLCertificateMonitor</code>[cite: 4]</td>
+                            <td class="p-3 border border-slate-200"><code>SSLCertificateMonitor</code></td>
                         </tr>
                         <tr>
                             <td class="p-3 border border-slate-200 font-semibold">Function App Name</td>
-                            <td class="p-3 border border-slate-200"><code>certmonitor</code>[cite: 4]</td>
+                            <td class="p-3 border border-slate-200"><code>certmonitor</code></td>
                         </tr>
                         <tr>
                             <td class="p-3 border border-slate-200 font-semibold">Storage Account</td>
-                            <td class="p-3 border border-slate-200"><code>sslcertificatemonitb84b</code>[cite: 4]</td>
+                            <td class="p-3 border border-slate-200"><code>sslcertificatemonitb84b</code></td>
                         </tr>
                         <tr>
                             <td class="p-3 border border-slate-200 font-semibold">Storage Share Quota</td>
-                            <td class="p-3 border border-slate-200">1 GB File Share[cite: 4]</td>
+                            <td class="p-3 border border-slate-200">1 GB File Share</td>
                         </tr>
                     </tbody>
                 </table>
@@ -130,7 +130,7 @@
 
         <section class="mb-10">
             <h2 class="text-2xl font-bold text-slate-900 mb-4">📁 File Structure & Component Overview</h2>
-            <p>The Timer Trigger function resides under <code>site/wwwroot/TimerTriggerforSSLexpiry/</code> inside the Azure Storage File Share[cite: 4]:</p>
+            <p>The Timer Trigger function resides under <code>site/wwwroot/TimerTriggerforSSLexpiry/</code> inside the Azure Storage File Share:</p>
             <pre><code class="language-text">TimerTriggerforSSLexpiry/
 ├── run.ps1                   # Main PowerShell script (Execution logic & email rendering)
 ├── function.json             # Function definition & NCRONTAB schedule configuration
@@ -145,15 +145,15 @@
 
             <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">1. Master URL Feed (<code>URL loader list.txt</code>)</h3>
             <blockquote class="border-l-4 border-slate-400 pl-4 italic text-slate-700 my-4">
-                <strong class="not-italic font-semibold text-slate-900">Location:</strong> <code>sslcertificatemonitb84b</code> > <strong class="not-italic font-semibold text-slate-900">File share</strong> > <code>site/wwwroot/TimerTriggerforSSLexpiry/URL loader list.txt</code>[cite: 4]
+                <strong class="not-italic font-semibold text-slate-900">Location:</strong> <code>sslcertificatemonitb84b</code> > <strong class="not-italic font-semibold text-slate-900">File share</strong> > <code>site/wwwroot/TimerTriggerforSSLexpiry/URL loader list.txt</code>
             </blockquote>
-            <p>This file contains the list of target domain names to inspect during each execution[cite: 4].</p>
+            <p>This file contains the list of target domain names to inspect during each execution.</p>
 
             <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">Rules for Updating:</h4>
             <ul class="list-disc pl-6 space-y-2 text-slate-700">
-                <li><strong class="font-semibold text-slate-900">Segregation:</strong> Entries are organized by client name using <code>###</code> headers (e.g., <code>### CLIENT1</code>)[cite: 4].</li>
-                <li><strong class="font-semibold text-slate-900">Commenting Out Entries:</strong> Any line matching or starting with <code>^###</code> or <code>#</code> is ignored by the parser script[cite: 4].</li>
-                <li><strong class="font-semibold text-slate-900">Adding New Sites:</strong> Simply insert the raw domain or hostname on a new line without any <code>#</code> prefix[cite: 4].</li>
+                <li><strong class="font-semibold text-slate-900">Segregation:</strong> Entries are organized by client name using <code>###</code> headers (e.g., <code>### CLIENT1</code>).</li>
+                <li><strong class="font-semibold text-slate-900">Commenting Out Entries:</strong> Any line matching or starting with <code>^###</code> or <code>#</code> is ignored by the parser script.</li>
+                <li><strong class="font-semibold text-slate-900">Adding New Sites:</strong> Simply insert the raw domain or hostname on a new line without any <code>#</code> prefix.</li>
             </ul>
 
             <pre><code class="language-text">### client1
@@ -166,9 +166,9 @@ masked4.com</code></pre>
 
             <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">2. Schedule Configuration (<code>function.json</code>)</h3>
             <blockquote class="border-l-4 border-slate-400 pl-4 italic text-slate-700 my-4">
-                <strong class="not-italic font-semibold text-slate-900">Location:</strong> <code>sslcertificatemonitb84b</code> > <strong class="not-italic font-semibold text-slate-900">File share</strong> > <code>site/wwwroot/TimerTriggerforSSLexpiry/function.json</code>[cite: 4]
+                <strong class="not-italic font-semibold text-slate-900">Location:</strong> <code>sslcertificatemonitb84b</code> > <strong class="not-italic font-semibold text-slate-900">File share</strong> > <code>site/wwwroot/TimerTriggerforSSLexpiry/function.json</code>
             </blockquote>
-            <p>The execution schedule uses standard <strong class="font-semibold text-slate-900">NCRONTAB</strong> expressions configured in the function binding[cite: 4]:</p>
+            <p>The execution schedule uses standard <strong class="font-semibold text-slate-900">NCRONTAB</strong> expressions configured in the function binding:</p>
 
             <pre><code class="language-json">{
   "bindings": [
@@ -183,18 +183,18 @@ masked4.com</code></pre>
 
             <div class="bg-blue-50 border-l-4 border-blue-500 p-4 my-6 rounded-r-md">
                 <p class="font-bold text-blue-900 m-0">💡 Schedule Note:</p>
-                <p class="text-blue-800 m-0 mt-1"><code>"0 0 8 * * MON"</code> triggers the function every <strong class="font-semibold text-slate-900">Monday at 08:00 AM UTC</strong>[cite: 4].</p>
+                <p class="text-blue-800 m-0 mt-1"><code>"0 0 8 * * MON"</code> triggers the function every <strong class="font-semibold text-slate-900">Monday at 08:00 AM UTC</strong>.</p>
             </div>
 
             <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">3. Execution Logging (<code>ExecutionLog.txt</code>)</h3>
             <blockquote class="border-l-4 border-slate-400 pl-4 italic text-slate-700 my-4">
-                <strong class="not-italic font-semibold text-slate-900">Location:</strong> <code>sslcertificatemonitb84b</code> > <strong class="not-italic font-semibold text-slate-900">File share</strong> > <code>site/wwwroot/TimerTriggerforSSLexpiry/ExecutionLog.txt</code>[cite: 4]
+                <strong class="not-italic font-semibold text-slate-900">Location:</strong> <code>sslcertificatemonitb84b</code> > <strong class="not-italic font-semibold text-slate-900">File share</strong> > <code>site/wwwroot/TimerTriggerforSSLexpiry/ExecutionLog.txt</code>
             </blockquote>
-            <p>Logs all operation details, connection timeouts, TLS handshake failures, or network status errors during script execution[cite: 4].</p>
+            <p>Logs all operation details, connection timeouts, TLS handshake failures, or network status errors during script execution.</p>
 
             <div class="bg-amber-50 border-l-4 border-amber-500 p-4 my-6 rounded-r-md">
                 <p class="font-bold text-amber-900 m-0">💡 Troubleshooting Tip:</p>
-                <p class="text-amber-800 m-0 mt-1">If automated weekly emails are missing, inspect <code>ExecutionLog.txt</code> to verify if connection timeouts or invalid hosts halted the function run[cite: 4].</p>
+                <p class="text-amber-800 m-0 mt-1">If automated weekly emails are missing, inspect <code>ExecutionLog.txt</code> to verify if connection timeouts or invalid hosts halted the function run.</p>
             </div>
         </section>
 
@@ -213,23 +213,23 @@ masked4.com</code></pre>
                     <tbody class="divide-y divide-slate-200 text-slate-700">
                         <tr>
                             <td class="p-3 border border-slate-200 font-semibold">Recipient Email (<code>$To</code>)</td>
-                            <td class="p-3 border border-slate-200"><code>masked@masked.com</code>[cite: 4]</td>
+                            <td class="p-3 border border-slate-200"><code>masked@masked.com</code></td>
                         </tr>
                         <tr>
                             <td class="p-3 border border-slate-200 font-semibold">Sender Email (<code>$From</code>)</td>
-                            <td class="p-3 border border-slate-200"><code>no-reply@masked.com</code>[cite: 4]</td>
+                            <td class="p-3 border border-slate-200"><code>no-reply@masked.com</code></td>
                         </tr>
                         <tr>
                             <td class="p-3 border border-slate-200 font-semibold">SendGrid API Key</td>
-                            <td class="p-3 border border-slate-200">Loaded dynamically from App Settings: <code>$env:SENDGRID_API_KEY</code>[cite: 4]</td>
+                            <td class="p-3 border border-slate-200">Loaded dynamically from App Settings: <code>$env:SENDGRID_API_KEY</code></td>
                         </tr>
                         <tr>
                             <td class="p-3 border border-slate-200 font-semibold">Expiration Warning Threshold</td>
-                            <td class="p-3 border border-slate-200">60 days (<code>$ExpirationDays = 60</code>)[cite: 4]</td>
+                            <td class="p-3 border border-slate-200">60 days (<code>$ExpirationDays = 60</code>)</td>
                         </tr>
                         <tr>
                             <td class="p-3 border border-slate-200 font-semibold">TCP Timeout Limit</td>
-                            <td class="p-3 border border-slate-200">40 seconds (<code>$timeoutMs = 40000</code>)[cite: 4]</td>
+                            <td class="p-3 border border-slate-200">40 seconds (<code>$timeoutMs = 40000</code>)</td>
                         </tr>
                     </tbody>
                 </table>
@@ -240,7 +240,7 @@ masked4.com</code></pre>
 
         <section class="mb-10">
             <h2 class="text-2xl font-bold text-slate-900 mb-4">💻 Script Architecture & Source Code (<code>run.ps1</code>)</h2>
-            <p>Below is the complete PowerShell script executed by the Timer Trigger. It reads the target domain list, initiates direct TCP/SSL stream handshakes to inspect certificate validity, and renders a responsive HTML email report sent via SendGrid REST API[cite: 4].</p>
+            <p>Below is the complete PowerShell script executed by the Timer Trigger. It reads the target domain list, initiates direct TCP/SSL stream handshakes to inspect certificate validity, and renders a responsive HTML email report sent via SendGrid REST API.</p>
 
             <pre><code class="language-powershell"># Input bindings are passed in via param block.
 param($Timer)
@@ -454,13 +454,13 @@ if ($APIKEY) {
         </section>
 
         <footer class="mt-12 pt-6 border-t border-slate-200 text-slate-600 text-sm">
-            <h2 class="text-base font-bold text-slate-800 m-0">Author - Pranesh Sathyanarayan[cite: 4]</h2>
-            <p class="mt-1 font-medium">Published First : 27 Oct 2026[cite: 4]</p>
+            <h2 class="text-base font-bold text-slate-800 m-0">Author - Pranesh Sathyanarayan</h2>
+            <p class="mt-1 font-medium">Published First : 27 Oct 2026</p>
             <p class="mt-2 text-xs italic">
-                AI agent disclosure - no AI used to generate content, gemini AI was used only to perform markdown formatting and beautification[cite: 4].
+                AI agent disclosure - no AI used to generate content, gemini AI was used only to perform markdown formatting and beautification.
             </p>
             <p class="mt-2 text-xs text-slate-500">
-                "This work is dedicated to the public domain under CC0 1.0 Universal. You are free to copy, modify, distribute, and perform the work, even for commercial purposes, all without asking permission."[cite: 4]
+                "This work is dedicated to the public domain under CC0 1.0 Universal. You are free to copy, modify, distribute, and perform the work, even for commercial purposes, all without asking permission."
             </p>
         </footer>
 
