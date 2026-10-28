@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Articles & Engineering Notes</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['Fira Code', 'JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar for light theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .card-shadow {
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+        }
+        .card-shadow:hover {
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-brand-100 selection:text-brand-900">
+
+    <!-- Header Grid Subtle Accent -->
+    <div class="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-blue-50/80 to-transparent pointer-events-none z-0"></div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow flex flex-col w-full">
+
+        <!-- Header Section -->
+        <header class="mb-10 border-b border-slate-200 pb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-brand-700 text-xs font-mono font-medium mb-3">
+                        <span class="w-2 h-2 rounded-full bg-brand-600 animate-pulse"></span>
+                        Technical Publications & Architecture Guides
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-2">
+                        Engineering Knowledge Base
+                    </h1>
+                    <p class="text-slate-600 max-w-2xl text-base">
+                        Deep dives into Azure infrastructure, cloud security posture, network troubleshooting, and monitoring solutions.
+                    </p>
+                </div>
+                <!-- Profile / Quick Links -->
+                <div class="flex items-center gap-3">
+                    <a href="https://github.com/praneshas19901/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl font-medium text-sm transition-all shadow-sm">
+                        <i class="fab fa-github text-base"></i>
+                        <span>GitHub Profile</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Controls: Search & Category Filters -->
+        <section class="mb-8 space-y-5">
+            <div class="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
+                <!-- Search Box -->
+                <div class="relative flex-grow max-w-xl">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                        <i class="fas fa-search text-sm"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Search by title, topic, or keyword..." 
+                        class="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-sm shadow-sm transition-all"
+                    >
+                    <button id="clearSearch" class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Visible Counter -->
+                <div class="flex items-center justify-between md:justify-end gap-3 text-xs text-slate-500 font-mono">
+                    <span>Showing <strong id="visibleCount" class="text-brand-600 font-semibold">0</strong> of <span id="totalCount">0</span> articles</span>
+                </div>
+            </div>
+
+            <!-- Category Pills -->
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200/60" id="filterContainer">
+                <button data-category="All" class="filter-btn active px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white shadow-sm transition-all">
+                    All Topics
+                </button>
+                <button data-category="Azure" class="filter-btn px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all">
+                    Azure
+                </button>
+                <button data-category="Security" class="filter-btn px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all">
+                    Security
+                </button>
+                <button data-category="DevOps" class="filter-btn px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all">
+                    DevOps
+                </button>
+                <button data-category="Networking" class="filter-btn px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all">
+                    Networking
+                </button>
+                <button data-category="Monitoring" class="filter-btn px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all">
+                    Monitoring
+                </button>
+            </div>
+        </section>
+
+        <!-- Articles Grid -->
+        <main class="flex-grow">
+            <div id="articlesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamic Article Cards injected here -->
+            </div>
+
+            <!-- Empty Search State -->
+            <div id="noResults" class="hidden text-center py-16 px-4 border border-dashed border-slate-200 rounded-2xl bg-white/50">
+                <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-search-minus text-xl"></i>
+                </div>
+                <h3 class="text-base font-semibold text-slate-900 mb-1">No matching articles found</h3>
+                <p class="text-slate-500 text-sm max-w-sm mx-auto mb-6">Try refining your search query or switching to a different category filter.</p>
+                <button id="resetFiltersBtn" class="px-4 py-2 bg-white hover:bg-slate-50 text-brand-600 text-xs font-mono font-medium rounded-lg border border-slate-200 transition-all shadow-sm">
+                    Reset All Filters
+                </button>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="mt-16 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-slate-500 text-xs gap-4">
+            <p>&copy; <span id="yearSpan"></span> Engineering Articles Index. Hosted on GitHub Pages.</p>
+            <a href="#top" class="hover:text-slate-800 transition-colors flex items-center gap-1 font-medium">
+                Back to top <i class="fas fa-arrow-up text-[10px]"></i>
+            </a>
+        </footer>
+    </div>
+
+    <!-- Copy Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 translate-y-20 opacity-0 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 transition-all duration-300 z-50 pointer-events-none">
+        <i class="fas fa-check-circle text-emerald-400 text-base"></i>
+        <span id="toastMessage" class="text-sm font-medium">Article link copied to clipboard!</span>
+    </div>
+
+    <script>
+        // Article Collection Data
+        const articles = [
+            {
+                id: "ip-whitelist-security",
+                title: "IP Whitelist Is Not Adequate Security",
+                url: "./IP-whitelist-is-not-adequate-security",
+                summary: "Why relying solely on IP whitelisting creates false security guarantees in modern cloud environments. Exploring Zero Trust architecture, identity verification, and dynamic defense layer strategies.",
+                category: "Cloud & Security",
+                tags: ["Security", "Cloud"],
+                readTime: "~5 min read",
+                icon: "fa-shield-halved",
+                iconBg: "bg-amber-50 text-amber-600 border-amber-200"
+            },
+            {
+                id: "smtp-kudu-console",
+                title: "SMTP Email Handling via Azure AppService Kudu Console",
+                url: "./SMTP-email-handling-via-Azure-AppService-kudu-console",
+                summary: "A practical guide to diagnosing and testing outbound SMTP traffic directly within the Azure App Service Kudu diagnostic console. Essential techniques for DevOps troubleshooting.",
+                category: "Azure & DevOps",
+                tags: ["Azure", "DevOps"],
+                readTime: "~7 min read",
+                icon: "fa-paper-plane",
+                iconBg: "bg-blue-50 text-blue-600 border-blue-200"
+            },
+            {
+                id: "app-insights-403",
+                title: "Application Insights Web Tracking HTTP Module 403 Error",
+                url: "./application_insights_web_tracking_http_module_403_error",
+                summary: "Resolving unexpected HTTP 403 Forbidden errors when integrating Application Insights telemetry modules into IIS and Web Apps. Step-by-step diagnostic process and fix.",
+                category: "Azure & Troubleshooting",
+                tags: ["Azure", "Troubleshooting"],
+                readTime: "~6 min read",
+                icon: "fa-circle-exclamation",
+                iconBg: "bg-rose-50 text-rose-600 border-rose-200"
+            },
+            {
+                id: "ssl-expiry-monitoring",
+                title: "SSL Certificate Expiry Monitoring Solution",
+                url: "./ssl_certificate_expiry_monitoring_solution",
+                summary: "An automated, lightweight monitoring pipeline designed to proactively track X.509 SSL certificate expiration dates and alert engineering teams prior to outages.",
+                category: "Security & Monitoring",
+                tags: ["Security", "Monitoring"],
+                readTime: "~8 min read",
+                icon: "fa-lock",
+                iconBg: "bg-emerald-50 text-emerald-600 border-emerald-200"
+            },
+            {
+                id: "vpn-gateway-upgrade-nat",
+                title: "VPN Gateway SKU Upgrade and NAT Demo",
+                url: "./vpn_gateway_sku_upgrade_and_nat_demo",
+                summary: "Detailed walkthrough of upgrading Azure Virtual Network Gateways without downtime, paired with a implementation demo of Network Address Translation (NAT) for overlapping IP address ranges.",
+                category: "Azure Networking",
+                tags: ["Azure", "Networking"],
+                readTime: "~10 min read",
+                icon: "fa-network-wired",
+                iconBg: "bg-indigo-50 text-indigo-600 border-indigo-200"
+            }
+        ];
+
+        // Active State Variables
+        let currentCategory = "All";
+        let searchQuery = "";
+
+        // Elements
+        const articlesGrid = document.getElementById("articlesGrid");
+        const searchInput = document.getElementById("searchInput");
+        const clearSearchBtn = document.getElementById("clearSearch");
+        const filterBtns = document.querySelectorAll(".filter-btn");
+        const visibleCountEl = document.getElementById("visibleCount");
+        const totalCountEl = document.getElementById("totalCount");
+        const noResults = document.getElementById("noResults");
+        const resetFiltersBtn = document.getElementById("resetFiltersBtn");
+        const toast = document.getElementById("toast");
+
+        document.getElementById("yearSpan").textContent = new Date().getFullYear();
+
+        // Render Cards Function
+        function renderArticles() {
+            const filtered = articles.filter(article => {
+                const matchesCategory = (currentCategory === "All") || 
+                    article.tags.some(tag => tag.toLowerCase() === currentCategory.toLowerCase()) ||
+                    article.category.toLowerCase().includes(currentCategory.toLowerCase());
+                
+                const matchesSearch = searchQuery === "" || 
+                    article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    article.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    article.category.toLowerCase().includes(searchQuery.toLowerCase());
+
+                return matchesCategory && matchesSearch;
+            });
+
+            visibleCountEl.textContent = filtered.length;
+            totalCountEl.textContent = articles.length;
+
+            articlesGrid.innerHTML = "";
+
+            if (filtered.length === 0) {
+                noResults.classList.remove("hidden");
+                articlesGrid.classList.add("hidden");
+                return;
+            } else {
+                noResults.classList.add("hidden");
+                articlesGrid.classList.remove("hidden");
+            }
+
+            filtered.forEach(article => {
+                const card = document.createElement("article");
+                card.className = "card-shadow bg-white border border-slate-200/90 rounded-2xl p-6 flex flex-col justify-between hover:border-blue-300 transition-all duration-200 group relative";
+
+                const tagBadges = article.tags.map(tag => 
+                    `<span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-medium bg-slate-100 text-slate-600 border border-slate-200">${tag}</span>`
+                ).join(" ");
+
+                card.innerHTML = `
+                    <div>
+                        <!-- Header Meta -->
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <div class="w-10 h-10 rounded-xl border flex items-center justify-center ${article.iconBg}">
+                                <i class="fas ${article.icon} text-base"></i>
+                            </div>
+                            <div class="flex items-center gap-2.5 text-xs text-slate-500 font-mono">
+                                <span><i class="far fa-clock mr-1 text-slate-400"></i>${article.readTime}</span>
+                                <button onclick="copyShareLink(event, '${article.url}')" title="Copy article link" class="p-1.5 text-slate-400 hover:text-brand-600 transition-colors rounded-lg hover:bg-slate-100">
+                                    <i class="fas fa-link text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Category Subtitle -->
+                        <span class="text-xs font-semibold uppercase tracking-wider text-brand-600 mb-1.5 block">
+                            ${article.category}
+                        </span>
+
+                        <!-- Article Title -->
+                        <h2 class="text-lg font-bold text-slate-900 group-hover:text-brand-600 transition-colors mb-2.5 leading-snug">
+                            <a href="${article.url}" class="after:absolute after:inset-0">
+                                ${article.title}
+                            </a>
+                        </h2>
+
+                        <!-- Summary -->
+                        <p class="text-slate-600 text-sm line-clamp-3 mb-6 leading-relaxed">
+                            ${article.summary}
+                        </p>
+                    </div>
+
+                    <!-- Card Footer -->
+                    <div>
+                        <div class="flex flex-wrap gap-1.5 mb-5">
+                            ${tagBadges}
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-brand-600 group-hover:text-brand-700">
+                            <span>Read Article</span>
+                            <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+                `;
+
+                articlesGrid.appendChild(card);
+            });
+        }
+
+        // Live Search Handler
+        searchInput.addEventListener("input", (e) => {
+            searchQuery = e.target.value.trim();
+            if (searchQuery.length > 0) {
+                clearSearchBtn.classList.remove("hidden");
+            } else {
+                clearSearchBtn.classList.add("hidden");
+            }
+            renderArticles();
+        });
+
+        clearSearchBtn.addEventListener("click", () => {
+            searchInput.value = "";
+            searchQuery = "";
+            clearSearchBtn.classList.add("hidden");
+            renderArticles();
+            searchInput.focus();
+        });
+
+        // Filter Buttons Handler
+        filterBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                filterBtns.forEach(b => {
+                    b.classList.remove("bg-brand-600", "text-white", "shadow-sm", "active");
+                    b.classList.add("bg-white", "text-slate-600", "border-slate-200");
+                });
+
+                btn.classList.remove("bg-white", "text-slate-600", "border-slate-200");
+                btn.classList.add("bg-brand-600", "text-white", "shadow-sm", "active");
+
+                currentCategory = btn.getAttribute("data-category");
+                renderArticles();
+            });
+        });
+
+        resetFiltersBtn.addEventListener("click", () => {
+            searchInput.value = "";
+            searchQuery = "";
+            clearSearchBtn.classList.add("hidden");
+            filterBtns[0].click();
+        });
+
+        // Copy Share Link Helper
+        function copyShareLink(event, relativeUrl) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const fullUrl = new URL(relativeUrl, window.location.href).href;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(fullUrl).then(showToast);
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = fullUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast();
+                } catch (err) {
+                    console.error('Copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function showToast() {
+            toast.classList.remove("translate-y-20", "opacity-0");
+            toast.classList.add("translate-y-0", "opacity-100");
+
+            setTimeout(() => {
+                toast.classList.remove("translate-y-0", "opacity-100");
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 3000);
+        }
+
+        // Initialize Page
+        renderArticles();
+    </script>
+</body>
+</html>
