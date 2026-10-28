@@ -43,8 +43,11 @@
 
     /* --- ADD THIS TO ALIGN ALL IMAGES TO THE LEFT --- */
     .prose img {
-        margin-left: 0 !important;
+		margin-left: 0 !important;
         margin-right: auto !important;
+        width: 100%;       /* Makes the image expand to fit the container width */
+        max-width: 100%;   /* Prevents it from overflowing */
+        height: auto;      /* Keeps the correct aspect ratio */
     }
 
     /* Optional: If you use <figure> elements for images with captions, align them too */
