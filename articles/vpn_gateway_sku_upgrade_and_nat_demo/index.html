@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure VPN Gateway SKU Upgrade &amp; Network Address Translation (NAT) Guide</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <!-- KaTeX for math typesetting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        code, pre {
+            font-family: 'Fira Code', monospace;
+        }
+        .prose pre {
+            background-color: #0d1117;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .prose pre code.hljs, 
+        .prose pre code[class*="language-"] {
+            color: #e2e8f0;
+        }
+        .prose code:not(pre code) {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+            border: 1px solid #cbd5e1;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+    <main class="max-w-4xl mx-auto bg-white p-6 sm:p-10 lg:p-12 rounded-xl shadow-sm border border-slate-200 prose prose-slate lg:prose-lg max-w-none">
+        
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-6">🚀 Azure VPN Gateway SKU Upgrade &amp; Network Address Translation (NAT) Guide</h1>
+
+        <blockquote class="border-l-4 border-slate-400 pl-4 italic text-slate-700 my-4">
+            <strong class="not-italic font-semibold text-slate-900">Document Type:</strong> Proof of Concept (POC) &amp; Technical Blueprint<br>
+            <strong class="not-italic font-semibold text-slate-900">Platform:</strong> Microsoft Azure Infrastructure<br>
+            <strong class="not-italic font-semibold text-slate-900">Topics Covered:</strong> Virtual Network Gateway, SKU Resizing, Network Address Translation (1:1 Static SNAT), IPsec S2S VPN
+        </blockquote>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">📌 Executive Summary</h2>
+            <p class="text-lg text-slate-600 leading-relaxed">
+                This document demonstrates the end-to-end technical procedure for <strong class="font-semibold text-slate-900">resizing an Azure Virtual Network Gateway SKU</strong> and subsequently configuring <strong class="font-semibold text-slate-900">Static Network Address Translation (NAT) rules</strong> over a Site-to-Site (S2S) IPsec VPN tunnel[cite: 5].
+            </p>
+            <p class="mt-4">
+                In hybrid network topologies, overlapping IP address spaces or administrative constraints often prevent direct routing between cloud networks and on-premises environments[cite: 5]. This guide illustrates a real-world scenario where an existing Azure VNET (<code>10.2.0.0/16</code>) conflicts with external routing requirements, requiring an in-flight SKU upgrade (from <code>VpnGw1AZ</code> to <code>VpnGw2AZ</code>) to unlock Azure's native NAT functionality and seamlessly translate outbound/inbound traffic to an alternative range (<code>10.4.0.0/16</code>)[cite: 5].
+            </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">🎯 Objectives &amp; Key Takeaways</h2>
+            <ol class="list-decimal pl-6 space-y-2 text-slate-700">
+                <li>
+                    <strong class="font-semibold text-slate-900">Gateway Upgrade &amp; Resilience Monitoring:</strong>
+                    <ul class="list-disc pl-6 mt-1 space-y-1">
+                        <li>Resize an active Azure Virtual Network Gateway (<code>VpnGw1AZ</code> $\rightarrow$ <code>VpnGw2AZ</code>)[cite: 5].</li>
+                        <li>Evaluate network loss, downtime, and packet behavior during the gateway reconfiguration phase[cite: 5].</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong class="font-semibold text-slate-900">Overlapping IP Space Resolution via NAT:</strong>
+                    <ul class="list-disc pl-6 mt-1 space-y-1">
+                        <li>Enable NAT features post-upgrade to prevent CIDR overlapping and routing collisions[cite: 5].</li>
+                        <li>Configure <strong class="font-semibold text-slate-900">Egress SNAT</strong> (<code>10.2.0.0/16</code> $\rightarrow$ <code>10.4.0.0/16</code>) and <strong class="font-semibold text-slate-900">Ingress SNAT</strong> (<code>10.4.0.0/16</code> $\rightarrow$ <code>10.2.0.0/16</code>)[cite: 5].</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong class="font-semibold text-slate-900">Packet Analysis &amp; Verification:</strong>
+                    <ul class="list-disc pl-6 mt-1 space-y-1">
+                        <li>Validate 1:1 NAT mapping using ICMP ping tests and TCP port probing[cite: 5].</li>
+                        <li>Perform Wireshark packet inspection on the target remote endpoint to verify source translation[cite: 5].</li>
+                    </ul>
+                </li>
+            </ol>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">🏗️ Reference Architecture Overview</h2>
+            <pre><code class="language-text">+-----------------------------------------------------------------------------------+
+|                                  AZURE VNET                                       |
+|                                                                                   |
+|   +-------------------+                     +---------------------------------+   |
+|   |   Test Workload   |  10.2.0.6           |  Azure Virtual Network Gateway  |   |
+|   |   (Azure VM)      | ------------------> |  Public IP: 20.246.194.32        |   |
+|   +-------------------+                     |  Primary Range: 10.2.0.0/16     |   |
++-------------------------------------------- |  NAT Range:     10.4.0.0/16     | --+
+                                              +---------------------------------+
+                                                               |
+                                                       IPsec S2S Tunnel
+                                                       (NAT Translation)
+                                                               |
+                                                               v
++-----------------------------------------------------------------------------------+
+|                               ON-PREMISES NETWORK                                 |
+|                                                                                   |
+|   +---------------------------------+       +---------------------------------+   |
+|   |  On-Prem Gateway / Router       |       |  On-Prem Target Workload        |   |
+|   |  Public IP: 20.127.165.29       | ----> |  Address: 10.0.0.4              |   |
+|   |  Subnet:    10.0.0.0/16         |       |  (Sees source as 10.4.0.6)      |   |
+|   +---------------------------------+       +---------------------------------+   |
++-----------------------------------------------------------------------------------+</code></pre>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">📋 Topology &amp; Configuration Details</h2>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Component</th>
+                            <th class="p-3 border border-slate-200">Identifier / IP Address</th>
+                            <th class="p-3 border border-slate-200">Subnet / Address Space</th>
+                            <th class="p-3 border border-slate-200">Role / Description</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Azure VNET</td>
+                            <td class="p-3 border border-slate-200">—</td>
+                            <td class="p-3 border border-slate-200"><code>10.2.0.0/16</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">Main workload VNET hosting test resources[cite: 5]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Azure Secondary Subnet</td>
+                            <td class="p-3 border border-slate-200">—</td>
+                            <td class="p-3 border border-slate-200"><code>10.4.0.0/16</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">Range designated for NAT translation[cite: 5]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Azure VPN Gateway</td>
+                            <td class="p-3 border border-slate-200"><code>20.246.194.32</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200"><code>VpnGw1AZ</code> $\rightarrow$ <code>VpnGw2AZ</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">VNG performing IPsec encryption and NAT[cite: 5]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Simulated On-Prem Gateway</td>
+                            <td class="p-3 border border-slate-200"><code>20.127.165.29</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200"><code>10.0.0.0/16</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">Windows RRAS Server handling S2S connection[cite: 5]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Azure Testing VM</td>
+                            <td class="p-3 border border-slate-200"><code>10.2.0.6</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200"><code>10.2.0.0/24</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">Workload initiating outbound traffic[cite: 5]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">On-Prem Target VM</td>
+                            <td class="p-3 border border-slate-200"><code>10.0.0.4</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200"><code>10.0.0.0/24</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">Remote host receiving translated traffic[cite: 5]</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h1 class="text-2xl font-bold text-slate-900 mb-4">POC VPN Gateway SKU Upgrade &amp; NAT</h1>
+
+            <figure class="my-6">
+                <img src="./images-az-vpn-gw/page_1_image_1.png" alt="Network Setup Diagram" class="rounded-lg border border-slate-200 mx-auto">
+                <figcaption class="text-center text-sm text-slate-500 mt-2">Network Setup Diagram</figcaption>
+            </figure>
+
+            <h2 class="text-xl font-bold text-slate-900 mt-6 mb-3">Setup:</h2>
+            <p>Configure an Azure virtual network gateway with local network gateway pointing to on-premise router or gateway, we'll simulate this by using a VM[cite: 5].</p>
+
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li>
+                    <strong class="font-semibold text-slate-900">Azure VPN Gateway:</strong>
+                    <ul class="list-disc pl-6 mt-1 space-y-1">
+                        <li><strong class="font-semibold text-slate-900">Public IP:</strong> <code>20.246.194.32</code>[cite: 5]</li>
+                        <li><strong class="font-semibold text-slate-900">VNET:</strong> <code>10.2.0.0/16</code>[cite: 5]</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong class="font-semibold text-slate-900">On-Prem Gateway (Simulated by Azure VM):</strong>
+                    <ul class="list-disc pl-6 mt-1 space-y-1">
+                        <li><strong class="font-semibold text-slate-900">Public IP:</strong> <code>20.127.165.29</code>[cite: 5]</li>
+                        <li><strong class="font-semibold text-slate-900">VNET:</strong> <code>10.0.0.0/16</code>[cite: 5]</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong class="font-semibold text-slate-900">Local Network Gateway:</strong>
+                    <ul class="list-disc pl-6 mt-1 space-y-1">
+                        <li><strong class="font-semibold text-slate-900">IP:</strong> <code>20.127.165.29</code>[cite: 5]</li>
+                        <li><strong class="font-semibold text-slate-900">Address Space(s):</strong> <code>10.0.0.0/16</code>[cite: 5]</li>
+                        <li><strong class="font-semibold text-slate-900">Connection:</strong> IKEv2 with pre-shared key[cite: 5]</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <p class="mt-4">We'll also need a testing VM in the same VNET as the Azure virtual network gateway to perform the VPN tunnel test[cite: 5].</p>
+            <p>The on-prem simulation is done on an Azure VM by using the Routing and Remote Access module (Windows Server component)[cite: 5].</p>
+            <p>The details on configuring it are at the public article: <em>How to Configure Site-to-Site VPN Connection on Azure - ABC of Cloud Computing</em>[cite: 5].</p>
+
+            <hr class="my-6 border-slate-200">
+
+            <p>In the below example, <code>10.2.x.x</code> and <code>10.0.x.x</code> are peered[cite: 5].</p>
+
+            <pre><code class="language-cmd">C:\Windows\system32\cmd.exe - ping 10.2.0.6
+Reply from 10.2.0.6: bytes=32 time=3ms TTL=127
+Reply from 10.2.0.6: bytes=32 time=4ms TTL=127
+Reply from 10.2.0.6: bytes=32 time=4ms TTL=127
+Reply from 10.2.0.6: bytes=32 time=4ms TTL=127
+Reply from 10.2.0.6: bytes=32 time=3ms TTL=127
+Reply from 10.2.0.6: bytes=32 time=3ms TTL=127
+Reply from 10.2.0.6: bytes=32 time=3ms TTL=127
+Reply from 10.2.0.6: bytes=32 time=4ms TTL=127
+Reply from 10.2.0.6: bytes=32 time=3ms TTL=127
+Reply from 10.2.0.6: bytes=32 time=4ms TTL=127</code></pre>
+
+            <pre><code class="language-cmd">C:\Windows\system32\cmd.exe - ping 10.0.0.4
+Reply from 10.0.0.4: bytes=32 time=5ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=4ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=4ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=4ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=4ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=12ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=4ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=3ms TTL=127</code></pre>
+
+            <p class="mt-4">In Azure virtual network gateway, we see the connection status[cite: 5].</p>
+
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Name</th>
+                            <th class="p-3 border border-slate-200">Status</th>
+                            <th class="p-3 border border-slate-200">Connection type</th>
+                            <th class="p-3 border border-slate-200">Peer</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200">c2</td>
+                            <td class="p-3 border border-slate-200">Connected</td>
+                            <td class="p-3 border border-slate-200">Site-to-site (IPsec)</td>
+                            <td class="p-3 border border-slate-200">vng02</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>Some amount of traffic has moved through the tunnel, this can be tested by sending a file (1 GB) over the tunnel, and we can see the same below[cite: 5].</p>
+
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Resource group</th>
+                            <th class="p-3 border border-slate-200">Status</th>
+                            <th class="p-3 border border-slate-200">Data in</th>
+                            <th class="p-3 border border-slate-200">Data out</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200">vng01</td>
+                            <td class="p-3 border border-slate-200">Connected</td>
+                            <td class="p-3 border border-slate-200">1.04 GiB</td>
+                            <td class="p-3 border border-slate-200">4.96 MiB</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>On the simulation of the on-prem gateway, we set up Routing and Remote Access as shown below[cite: 5]:</p>
+
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Routing and Remote Access</strong>
+                    <ul class="list-disc pl-6 space-y-1">
+                        <li><strong class="font-semibold text-slate-900">Server Status</strong></li>
+                        <li><strong class="font-semibold text-slate-900">vm01 (local)</strong>
+                            <ul class="list-disc pl-6 space-y-1">
+                                <li><strong class="font-semibold text-slate-900">Network Interfaces</strong>
+                                    <ul class="list-disc pl-6 space-y-1">
+                                        <li><code>stos2</code>: Type: Demand-dial, Status: Enabled, Connection State: Connected[cite: 5]</li>
+                                        <li><code>Loopback</code>: Type: Loopback, Status: Enabled, Connection State: Connected[cite: 5]</li>
+                                        <li><code>Internal</code>: Type: Internal, Status: Enabled, Connection State: Connected[cite: 5]</li>
+                                        <li><code>Ethernet</code>: Type: Dedicated, Status: Enabled, Connection State: Connected (Microsoft Hyper-V Network Adapter)[cite: 5]</li>
+                                    </ul>
+                                </li>
+                                <li><strong class="font-semibold text-slate-900">Ports</strong>[cite: 5]</li>
+                                <li><strong class="font-semibold text-slate-900">Remote Access Logging</strong>[cite: 5]</li>
+                                <li><strong class="font-semibold text-slate-900">IPv4</strong>
+                                    <ul class="list-disc pl-6 space-y-1">
+                                        <li>General[cite: 5]</li>
+                                        <li>Static Routes[cite: 5]</li>
+                                    </ul>
+                                </li>
+                                <li><strong class="font-semibold text-slate-900">IPv6</strong>
+                                    <ul class="list-disc pl-6 space-y-1">
+                                        <li>General[cite: 5]</li>
+                                        <li>Static Routes[cite: 5]</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <hr class="my-6 border-slate-200">
+
+            <figure class="my-6">
+                <img src="./images-az-vpn-gw/page_3_image_1.png" alt="Azure Portal NAT Rules Unavailable" class="rounded-lg border border-slate-200 mx-auto">
+                <figcaption class="text-center text-sm text-slate-500 mt-2">Azure Portal NAT Rules Unavailable</figcaption>
+            </figure>
+
+            <p>In the current SKU of virtual network gateway (<code>VpnGw1AZ</code>), we can't see the option of configuring NAT rules[cite: 5].</p>
+
+            <figure class="my-6">
+                <img src="./images-az-vpn-gw/page_3_image_2.png" alt="Azure Portal Gateway Upgrade" class="rounded-lg border border-slate-200 mx-auto">
+                <figcaption class="text-center text-sm text-slate-500 mt-2">Azure Portal Gateway Upgrade</figcaption>
+            </figure>
+
+            <p>Let's start the resize operation from <code>VpnGw1AZ</code> to <code>VpnGw2AZ</code>. The gateway status goes to updating mode, and the new SKU is visible[cite: 5].</p>
+            <p>We'll see network drops in between when the resize operation is going on[cite: 5].</p>
+
+            <hr class="my-6 border-slate-200">
+
+            <pre><code class="language-cmd">Administrator: C:\Windows\system32\cmd.exe - ping -t 10.0.0.4
+Reply from 10.0.0.4: bytes=32 time=3ms TTL=127
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Reply from 10.0.0.4: bytes=32 time=4ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=2ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=2ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=2ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=2ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=2ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=2ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=2ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=2ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=7ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=2ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=2ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=2ms TTL=127
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.</code></pre>
+
+            <hr class="my-6 border-slate-200">
+
+            <p>In case the on-prem gateway shows a disconnected state, manually connect it again. This should resume connectivity in the tunnel[cite: 5].</p>
+
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Routing and Remote Access</strong>
+                    <ul class="list-disc pl-6 space-y-1">
+                        <li><strong class="font-semibold text-slate-900">LAN and Demand Dial Interfaces:</strong>
+                            <ul class="list-disc pl-6 space-y-1">
+                                <li><code>stos2</code>: Type: Demand-dial, Status: Enabled, Connection State: <strong class="font-semibold text-slate-900">Disconnected</strong>[cite: 5]</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <hr class="my-6 border-slate-200">
+
+            <figure class="my-6">
+                <img src="./images-az-vpn-gw/page_6_image_1.png" alt="NAT Rules Available" class="rounded-lg border border-slate-200 mx-auto">
+                <figcaption class="text-center text-sm text-slate-500 mt-2">NAT Rules Available</figcaption>
+            </figure>
+
+            <figure class="my-6">
+                <img src="./images-az-vpn-gw/page_6_image_2.png" alt="File Copy Test" class="rounded-lg border border-slate-200 mx-auto">
+                <figcaption class="text-center text-sm text-slate-500 mt-2">File Copy Test</figcaption>
+            </figure>
+
+            <p>Once the resize operation completes (which took around an hour), the NAT rules option becomes visible under <code>vng02 | NAT Rules</code>[cite: 5].</p>
+            <p>Test the IPsec tunnel by moving a 1 GB file again, and it succeeds (<code>test2.dat</code>, Speed: $14.0\text{ MB/s}$, $46\%$ complete)[cite: 5].</p>
+
+            <hr class="my-6 border-slate-200">
+
+            <p>Tunnel status shows connected[cite: 5].</p>
+
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Name</th>
+                            <th class="p-3 border border-slate-200">Status</th>
+                            <th class="p-3 border border-slate-200">Connection type</th>
+                            <th class="p-3 border border-slate-200">Peer</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200">c2</td>
+                            <td class="p-3 border border-slate-200">Connected</td>
+                            <td class="p-3 border border-slate-200">Site-to-site (IPsec)</td>
+                            <td class="p-3 border border-slate-200">vng02</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>Data inflow to tunnel verifies tunnel is operational (<code>Data in: 2.07 GiB</code>, <code>Data out: 9.14 MiB</code>)[cite: 5].</p>
+
+            <h2 class="text-2xl font-bold text-slate-900 mt-8 mb-4">NAT Setup for Virtual Network Gateway</h2>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Requirement:</h3>
+            <p>As set up in the previous procedure, there is an IPsec tunnel established between these two gateway devices[cite: 5]:</p>
+
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li>
+                    <strong class="font-semibold text-slate-900">Azure VPN Gateway:</strong>
+                    <ul class="list-disc pl-6 mt-1 space-y-1">
+                        <li><strong class="font-semibold text-slate-900">Public IP:</strong> <code>20.246.194.32</code>[cite: 5]</li>
+                        <li><strong class="font-semibold text-slate-900">VNET:</strong> <code>10.2.0.0/16</code>[cite: 5]</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong class="font-semibold text-slate-900">On-Prem Gateway (Simulated by Azure VM):</strong>
+                    <ul class="list-disc pl-6 mt-1 space-y-1">
+                        <li><strong class="font-semibold text-slate-900">Public IP:</strong> <code>20.127.165.29</code>[cite: 5]</li>
+                        <li><strong class="font-semibold text-slate-900">VNET:</strong> <code>10.0.0.0/16</code>[cite: 5]</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <p class="mt-4">However, on the on-prem side of the setup, the network administrator requires no traffic to originate from the source <code>10.2.0.0/16</code>, because they want to use this range to set up a tunnel with another office which is networked with the <code>10.2.0.0/16</code> range[cite: 5]. They cannot set up a tunnel with the other office as this network collides with the Azure VNET as well[cite: 5].</p>
+            <p>To address this, we can NAT the range <code>10.2.0.0/16</code> to <code>10.4.0.0/16</code>, after which the on-prem network administrator will only see traffic originating from <code>10.4.0.0/16</code> and will be free to take <code>10.2.0.0/16</code> out of the encryption domain and reuse it to add the other office[cite: 5].</p>
+
+            <hr class="my-6 border-slate-200">
+
+            <p>We need to first add an additional address space <code>10.4.0.0/16</code> on the VNET attached to Azure VPN Gateway[cite: 5].</p>
+
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Address space</th>
+                            <th class="p-3 border border-slate-200">Address range</th>
+                            <th class="p-3 border border-slate-200">Address count</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>10.2.0.0/16</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">10.2.0.0 - 10.2.255.255[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">65,536[cite: 5]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>10.4.0.0/16</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">10.4.0.0 - 10.4.255.255[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">65,536[cite: 5]</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>This is required so that traffic originating from <code>10.2.0.0/16</code> translates to <code>10.4.0.0/16</code> before going out of the Azure VPN Gateway, presenting itself as <code>10.4.0.0/16</code> to the on-premises gateway[cite: 5].</p>
+
+            <p>Let's add two NAT rules as follows[cite: 5]:</p>
+
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Name</th>
+                            <th class="p-3 border border-slate-200">Type</th>
+                            <th class="p-3 border border-slate-200">IP Configuration ID</th>
+                            <th class="p-3 border border-slate-200">Mode</th>
+                            <th class="p-3 border border-slate-200">Internal Mappings</th>
+                            <th class="p-3 border border-slate-200">External Mappings</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>nat02</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">Static[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">-</td>
+                            <td class="p-3 border border-slate-200">EgressSnat[cite: 5]</td>
+                            <td class="p-3 border border-slate-200"><code>10.2.0.0/16</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200"><code>10.4.0.0/16</code>[cite: 5]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>nat01</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">Static[cite: 5]</td>
+                            <td class="p-3 border border-slate-200">-</td>
+                            <td class="p-3 border border-slate-200">IngressSnat[cite: 5]</td>
+                            <td class="p-3 border border-slate-200"><code>10.4.0.0/16</code>[cite: 5]</td>
+                            <td class="p-3 border border-slate-200"><code>10.2.0.0/16</code>[cite: 5]</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">EgressSnat:</strong> Traffic originating from Azure at <code>10.2.0.0/16</code> will NAT to <code>10.4.0.0/16</code> before leaving the Azure VPN gateway[cite: 5].</li>
+                <li><strong class="font-semibold text-slate-900">IngressSnat:</strong> Traffic returning back from the on-premises gateway with <code>10.4.0.0/16</code> as destination will NAT back to <code>10.2.0.0/16</code> before exiting the Azure VPN gateway[cite: 5].</li>
+            </ul>
+
+            <hr class="my-6 border-slate-200">
+
+            <p>Also, on the on-premises gateway, we should add a static route for <code>10.4.0.0/16</code>[cite: 5]:</p>
+
+            <pre><code class="language-text">Routing and Remote Access -&gt; Static Routes:
+Destination: 10.4.0.0 | Network mask: 255.255.0.0 | Gateway: None | Interface: stos2 | Metric: 256
+Destination: 10.2.0.0 | Network mask: 255.255.0.0 | Gateway: None | Interface: stos2 | Metric: 256</code></pre>
+
+            <p>Associate the rules with the VPN connection as follows, and save it[cite: 5]:</p>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Ingress NAT Rules:</strong> <code>nat01</code>[cite: 5]</li>
+                <li><strong class="font-semibold text-slate-900">Egress NAT Rules:</strong> <code>nat02</code>[cite: 5]</li>
+            </ul>
+
+            <p class="mt-4">Now, if we send traffic from the Azure VPN gateway to the on-premises gateway originating from <code>10.2.0.0/16</code>, it will NAT to <code>10.4.0.0/16</code>[cite: 5].</p>
+            <p>For example, if we ping <code>10.0.0.4</code> (on-premises gateway) from a machine in the Azure VNET (<code>10.2.0.6</code>), traffic will NAT to <code>10.4.0.6</code> before reaching the on-premises gateway[cite: 5].</p>
+
+            <pre><code class="language-cmd">C:\Users\lcadmin&gt;ipconfig
+
+Windows IP Configuration
+
+Ethernet adapter Ethernet:
+   Connection-specific DNS Suffix  . : roxt3xp2wurevnevy44q01
+   Link-local IPv6 Address . . . . . : fe80::1f:b197:52ee:1e6
+   IPv4 Address. . . . . . . . . . . : 10.2.0.6
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 10.2.0.1</code></pre>
+
+            <hr class="my-6 border-slate-200">
+
+            <pre><code class="language-cmd">C:\Users\lcadmin&gt;ping -t 10.0.0.4
+
+Pinging 10.0.0.4 with 32 bytes of data:
+Reply from 10.0.0.4: bytes=32 time=4ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=3ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=5ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=4ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=4ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=4ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=3ms TTL=127
+Reply from 10.0.0.4: bytes=32 time=4ms TTL=127</code></pre>
+
+            <hr class="my-6 border-slate-200">
+
+            <p>On the On-premises gateway, we can see traffic originating from <code>10.4.0.6</code> using Wireshark[cite: 5]:</p>
+
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">No.</th>
+                            <th class="p-3 border border-slate-200">Time</th>
+                            <th class="p-3 border border-slate-200">Source</th>
+                            <th class="p-3 border border-slate-200">Destination</th>
+                            <th class="p-3 border border-slate-200">Protocol</th>
+                            <th class="p-3 border border-slate-200">Length</th>
+                            <th class="p-3 border border-slate-200">Info</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200">49</td>
+                            <td class="p-3 border border-slate-200">837.436955</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">ICMP</td>
+                            <td class="p-3 border border-slate-200">74</td>
+                            <td class="p-3 border border-slate-200">Echo (ping) reply id=0x0001, seq=...</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">50</td>
+                            <td class="p-3 border border-slate-200">838.454190</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">ICMP</td>
+                            <td class="p-3 border border-slate-200">74</td>
+                            <td class="p-3 border border-slate-200">Echo (ping) request id=0x0001, seq=...</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">51</td>
+                            <td class="p-3 border border-slate-200">838.454315</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">ICMP</td>
+                            <td class="p-3 border border-slate-200">74</td>
+                            <td class="p-3 border border-slate-200">Echo (ping) reply id=0x0001, seq=...</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">52</td>
+                            <td class="p-3 border border-slate-200">839.471294</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">ICMP</td>
+                            <td class="p-3 border border-slate-200">74</td>
+                            <td class="p-3 border border-slate-200">Echo (ping) request id=0x0001, seq=...</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">53</td>
+                            <td class="p-3 border border-slate-200">839.471414</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">ICMP</td>
+                            <td class="p-3 border border-slate-200">74</td>
+                            <td class="p-3 border border-slate-200">Echo (ping) reply id=0x0001, seq=...</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">54</td>
+                            <td class="p-3 border border-slate-200">840.477780</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">ICMP</td>
+                            <td class="p-3 border border-slate-200">74</td>
+                            <td class="p-3 border border-slate-200">Echo (ping) request id=0x0001, seq=...</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">55</td>
+                            <td class="p-3 border border-slate-200">840.477889</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">ICMP</td>
+                            <td class="p-3 border border-slate-200">74</td>
+                            <td class="p-3 border border-slate-200">Echo (ping) reply id=0x0001, seq=...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>Notice how the return traffic also goes back to <code>10.4.0.6</code>, but it will be NATTed to <code>10.2.0.6</code> before reaching the destination[cite: 5].</p>
+
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">No.</th>
+                            <th class="p-3 border border-slate-200">Time</th>
+                            <th class="p-3 border border-slate-200">Source</th>
+                            <th class="p-3 border border-slate-200">Destination</th>
+                            <th class="p-3 border border-slate-200">Protocol</th>
+                            <th class="p-3 border border-slate-200">Length</th>
+                            <th class="p-3 border border-slate-200">Info</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200">19228</td>
+                            <td class="p-3 border border-slate-200">2067.487503</td>
+                            <td class="p-3 border border-slate-200">10.2.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">ICMP</td>
+                            <td class="p-3 border border-slate-200">74</td>
+                            <td class="p-3 border border-slate-200">Echo (ping) request</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">19229</td>
+                            <td class="p-3 border border-slate-200">2067.491054</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">10.2.0.6</td>
+                            <td class="p-3 border border-slate-200">ICMP</td>
+                            <td class="p-3 border border-slate-200">74</td>
+                            <td class="p-3 border border-slate-200">Echo (ping) reply</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">19272</td>
+                            <td class="p-3 border border-slate-200">2068.494964</td>
+                            <td class="p-3 border border-slate-200">10.2.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">ICMP</td>
+                            <td class="p-3 border border-slate-200">74</td>
+                            <td class="p-3 border border-slate-200">Echo (ping) request</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">19273</td>
+                            <td class="p-3 border border-slate-200">2068.499028</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">10.2.0.6</td>
+                            <td class="p-3 border border-slate-200">ICMP</td>
+                            <td class="p-3 border border-slate-200">74</td>
+                            <td class="p-3 border border-slate-200">Echo (ping) reply</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="my-6 border-slate-200">
+
+            <p>If we do a TCP test[cite: 5]:</p>
+
+            <pre><code class="language-powershell">PS C:\Users\lcadmin&gt; Test-NetConnection -ComputerName 10.0.0.4 -port 139
+
+ComputerName           : 10.0.0.4
+RemoteAddress          : 10.0.0.4
+Remote Port            : 139
+InterfaceAlias         : Ethernet
+SourceAddress          : 10.2.0.6
+TcpTestSucceeded       : True</code></pre>
+
+            <p>We can see the same NAT happening in Wireshark (<code>tcp.port == 139</code>)[cite: 5]:</p>
+
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">No.</th>
+                            <th class="p-3 border border-slate-200">Time</th>
+                            <th class="p-3 border border-slate-200">Source</th>
+                            <th class="p-3 border border-slate-200">Destination</th>
+                            <th class="p-3 border border-slate-200">Protocol</th>
+                            <th class="p-3 border border-slate-200">Length</th>
+                            <th class="p-3 border border-slate-200">Info</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200">1</td>
+                            <td class="p-3 border border-slate-200">0.000000</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">TCP</td>
+                            <td class="p-3 border border-slate-200">66</td>
+                            <td class="p-3 border border-slate-200">49568 -&gt; 139 [SYN, ECE, CWR]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">2</td>
+                            <td class="p-3 border border-slate-200">0.000117</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">TCP</td>
+                            <td class="p-3 border border-slate-200">66</td>
+                            <td class="p-3 border border-slate-200">139 -&gt; 49568 [SYN, ACK, ECE]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">3</td>
+                            <td class="p-3 border border-slate-200">0.003614</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">TCP</td>
+                            <td class="p-3 border border-slate-200">54</td>
+                            <td class="p-3 border border-slate-200">49568 -&gt; 139 [ACK]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">4</td>
+                            <td class="p-3 border border-slate-200">0.004125</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">TCP</td>
+                            <td class="p-3 border border-slate-200">54</td>
+                            <td class="p-3 border border-slate-200">49568 -&gt; 139 [FIN, ACK]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">5</td>
+                            <td class="p-3 border border-slate-200">0.004166</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">TCP</td>
+                            <td class="p-3 border border-slate-200">54</td>
+                            <td class="p-3 border border-slate-200">139 -&gt; 49568 [FIN, ACK]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">6</td>
+                            <td class="p-3 border border-slate-200">0.007064</td>
+                            <td class="p-3 border border-slate-200">10.4.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">TCP</td>
+                            <td class="p-3 border border-slate-200">54</td>
+                            <td class="p-3 border border-slate-200">49568 -&gt; 139 [ACK]</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>Return traffic is NATTed back to <code>10.2.0.6</code>[cite: 5]:</p>
+
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">No.</th>
+                            <th class="p-3 border border-slate-200">Time</th>
+                            <th class="p-3 border border-slate-200">Source</th>
+                            <th class="p-3 border border-slate-200">Destination</th>
+                            <th class="p-3 border border-slate-200">Protocol</th>
+                            <th class="p-3 border border-slate-200">Length</th>
+                            <th class="p-3 border border-slate-200">Info</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200">9040</td>
+                            <td class="p-3 border border-slate-200">904.254044</td>
+                            <td class="p-3 border border-slate-200">10.2.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">TCP</td>
+                            <td class="p-3 border border-slate-200">54</td>
+                            <td class="p-3 border border-slate-200">49548 -&gt; 139 [ACK]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">9041</td>
+                            <td class="p-3 border border-slate-200">904.254388</td>
+                            <td class="p-3 border border-slate-200">10.2.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">TCP</td>
+                            <td class="p-3 border border-slate-200">54</td>
+                            <td class="p-3 border border-slate-200">49548 -&gt; 139 [FIN, ACK]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">9042</td>
+                            <td class="p-3 border border-slate-200">904.257725</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">10.2.0.6</td>
+                            <td class="p-3 border border-slate-200">TCP</td>
+                            <td class="p-3 border border-slate-200">54</td>
+                            <td class="p-3 border border-slate-200">139 -&gt; 49548 [FIN, ACK]</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200">9043</td>
+                            <td class="p-3 border border-slate-200">904.257748</td>
+                            <td class="p-3 border border-slate-200">10.2.0.6</td>
+                            <td class="p-3 border border-slate-200">10.0.0.4</td>
+                            <td class="p-3 border border-slate-200">TCP</td>
+                            <td class="p-3 border border-slate-200">54</td>
+                            <td class="p-3 border border-slate-200">49548 -&gt; 139 [ACK]</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="my-6 border-slate-200">
+
+            <figure class="my-6">
+                <img src="./images-az-vpn-gw/page_13_image_1.png" alt="Traffic Flow Diagram" class="rounded-lg border border-slate-200 mx-auto">
+                <figcaption class="text-center text-sm text-slate-500 mt-2">Traffic Flow Diagram</figcaption>
+            </figure>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Illustration Summary:</h3>
+            <ul class="list-disc pl-6 space-y-1 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">Forward Traffic:</strong> Traffic originating from <code>10.2.0.0/16</code> inside the Azure VNET passes through the Azure Virtual Network Gateway NAT, translates into <code>10.4.0.0/16</code>, and traverses the IPsec tunnel to the On-prem Gateway[cite: 5].</li>
+                <li><strong class="font-semibold text-slate-900">Return Traffic:</strong> Return traffic directed to <code>10.4.0.0/16</code> traverses the IPsec tunnel, reaches the Azure Virtual Network Gateway NAT, and translates back to <code>10.2.0.0/16</code> before reaching the source VM[cite: 5].</li>
+            </ul>
+        </section>
+
+        <footer class="mt-12 pt-6 border-t border-slate-200 text-slate-600 text-sm">
+            <h2 class="text-base font-bold text-slate-800 m-0">Author - Pranesh Sathyanarayan[cite: 5]</h2>
+            <p class="mt-1 font-medium">Published First : 27 Oct 2026[cite: 5]</p>
+            <p class="mt-2 text-xs italic">
+                AI agent disclosure - no AI used to generate content, gemini AI was used only to perform markdown formatting and beautification[cite: 5].
+            </p>
+            <p class="mt-2 text-xs text-slate-500">
+                "This work is dedicated to the public domain under CC0 1.0 Universal. You are free to copy, modify, distribute, and perform the work, even for commercial purposes, all without asking permission."[cite: 5]
+            </p>
+        </footer>
+
+    </main>
+</body>
+</html>
