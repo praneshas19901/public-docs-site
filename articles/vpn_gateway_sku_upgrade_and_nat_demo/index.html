@@ -15,32 +15,43 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        code, pre {
-            font-family: 'Fira Code', monospace;
-        }
-        .prose pre {
-            background-color: #0d1117;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            overflow-x: auto;
-        }
-        .prose pre code.hljs, 
-        .prose pre code[class*="language-"] {
-            color: #e2e8f0;
-        }
-        .prose code:not(pre code) {
-            background-color: #f1f5f9;
-            color: #0f172a;
-            padding: 0.2rem 0.4rem;
-            border-radius: 0.25rem;
-            font-size: 0.875em;
-            border: 1px solid #cbd5e1;
-        }
-    </style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+    body {
+        font-family: 'Inter', sans-serif;
+    }
+    code, pre {
+        font-family: 'Fira Code', monospace;
+    }
+    .prose pre {
+        background-color: #0d1117;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        overflow-x: auto;
+    }
+    .prose pre code.hljs, 
+    .prose pre code[class*="language-"] {
+        color: #e2e8f0;
+    }
+    .prose code:not(pre code) {
+        background-color: #f1f5f9;
+        color: #0f172a;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-size: 0.875em;
+        border: 1px solid #cbd5e1;
+    }
+
+    /* --- ADD THIS TO ALIGN ALL IMAGES TO THE LEFT --- */
+    .prose img {
+        margin-left: 0 !important;
+        margin-right: auto !important;
+    }
+
+    /* Optional: If you use <figure> elements for images with captions, align them too */
+    .prose figure {
+        text-align: left !important;
+    }
+</style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen py-10 px-4 sm:px-6 lg:px-8">
     <main class="max-w-4xl mx-auto bg-white p-6 sm:p-10 lg:p-12 rounded-xl shadow-sm border border-slate-200 prose prose-slate lg:prose-lg max-w-none">
