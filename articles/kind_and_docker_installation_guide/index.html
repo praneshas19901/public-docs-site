@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Running Kubernetes in Docker on ARM64</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        ::selection {
+            background-color: #e0e7ff;
+            color: #3730a3;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">🚀</span>
+                <span class="font-bold text-slate-900 text-lg tracking-tight">K8s on ARM64</span>
+            </div>
+            <nav class="hidden md:flex space-x-6 text-sm font-medium text-slate-600">
+                <a href="#prerequisites" class="hover:text-indigo-600 transition">Prerequisites</a>
+                <a href="#step-1" class="hover:text-indigo-600 transition">1. Docker</a>
+                <a href="#step-2" class="hover:text-indigo-600 transition">2. Tools</a>
+                <a href="#step-3" class="hover:text-indigo-600 transition">3. Cluster</a>
+                <a href="#step-4" class="hover:text-indigo-600 transition">4. Workloads</a>
+                <a href="#step-5" class="hover:text-indigo-600 transition">5. Cleanup</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+
+        <!-- Hero / Header Title -->
+        <section class="space-y-4 text-center md:text-left border-b border-slate-200 pb-8">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                <i class="fa-solid fa-microchip"></i> ARM64 Architecture Guide
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Running Kubernetes in Docker on ARM64 Architecture
+            </h1>
+            <p class="text-lg text-slate-600 leading-relaxed max-w-3xl">
+                A complete walkthrough for installing Docker, <code class="bg-slate-100 text-indigo-600 px-1.5 py-0.5 rounded text-sm font-mono font-medium">kind</code>, and <code class="bg-slate-100 text-indigo-600 px-1.5 py-0.5 rounded text-sm font-mono font-medium">kubectl</code> on ARM64 virtual machines, followed by deploying multi-architecture workload tests.
+            </p>
+        </section>
+
+        <!-- Prerequisites Box -->
+        <section id="prerequisites" class="bg-blue-50/70 border border-blue-200 rounded-xl p-5 text-blue-900 space-y-2">
+            <div class="flex items-center gap-2 font-semibold text-blue-800">
+                <i class="fa-solid fa-circle-info text-blue-600"></i>
+                <span>Prerequisites</span>
+            </div>
+            <ul class="list-disc list-inside space-y-1 text-sm text-blue-950 ml-1">
+                <li>An <strong>ARM64 Linux Virtual Machine</strong> or instance (e.g., AWS Graviton, Apple Silicon Linux VM, Raspberry Pi 64-bit, or Ampere instances running Ubuntu 22.04 / 24.04 LTS).</li>
+                <li>A user account with <code class="bg-blue-100/80 px-1 py-0.5 rounded font-mono text-xs">sudo</code> privileges.</li>
+            </ul>
+        </section>
+
+        <!-- Step 1: Install Docker Engine -->
+        <section id="step-1" class="space-y-4">
+            <div class="flex items-center gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-sm">1</span>
+                <h2 class="text-2xl font-bold text-slate-900">Install Docker Engine</h2>
+            </div>
+            <p class="text-slate-600">Ensure Docker is installed and configured to run without requiring <code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono">sudo</code> for every command.</p>
+
+            <div class="relative group">
+                <button onclick="copyCode(this)" class="absolute right-3 top-3 bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded text-xs font-mono transition flex items-center gap-1.5">
+                    <i class="fa-regular fa-copy"></i><span>Copy</span>
+                </button>
+                <pre class="bg-slate-900 text-slate-100 rounded-xl p-5 overflow-x-auto text-sm font-mono leading-relaxed shadow-sm"><code><span class="text-slate-400"># 1. Update package index and remove conflicting legacy packages</span>
+sudo apt-get update
+sudo apt-get remove -y docker docker-engine docker.io containerd runc
+sudo apt-get install -y ca-certificates curl gnupg
+
+<span class="text-slate-400"># 2. Add Docker's official GPG key</span>
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+<span class="text-slate-400"># 3. Add the Docker repository for ARM64</span>
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+<span class="text-slate-400"># 4. Install Docker Engine and related plugins</span>
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+<span class="text-slate-400"># 5. Manage Docker as a non-root user</span>
+sudo usermod -aG docker $USER</code></pre>
+            </div>
+
+            <!-- Tip Callout -->
+            <div class="bg-amber-50/80 border border-amber-200 rounded-xl p-4 text-amber-900 space-y-2">
+                <div class="flex items-center gap-2 font-semibold text-amber-800">
+                    <i class="fa-solid fa-lightbulb text-amber-600"></i>
+                    <span>Permission Resolution</span>
+                </div>
+                <p class="text-sm text-amber-950">
+                    If you encounter <code class="bg-amber-100/80 px-1.5 py-0.5 rounded font-mono text-xs">permission denied while trying to connect to the Docker daemon socket</code>, refresh your group membership without logging out:
+                </p>
+                <div class="relative group mt-2">
+                    <pre class="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto text-xs font-mono"><code>newgrp docker</code></pre>
+                </div>
+            </div>
+
+            <p class="text-slate-600 text-sm">Verify your Docker installation by running:</p>
+            <div class="relative group">
+                <pre class="bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto text-sm font-mono"><code>docker run --rm hello-world</code></pre>
+            </div>
+        </section>
+
+        <!-- Step 2: Install kubectl & kind -->
+        <section id="step-2" class="space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-sm">2</span>
+                <h2 class="text-2xl font-bold text-slate-900">Install kubectl & kind (ARM64 Binaries)</h2>
+            </div>
+
+            <!-- Sub-step 1 -->
+            <div class="space-y-2">
+                <h3 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-terminal text-slate-400 text-sm"></i> 1. Install kubectl
+                </h3>
+                <div class="relative group">
+                    <button onclick="copyCode(this)" class="absolute right-3 top-3 bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded text-xs font-mono transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy"></i><span>Copy</span>
+                    </button>
+                    <pre class="bg-slate-900 text-slate-100 rounded-xl p-5 overflow-x-auto text-sm font-mono leading-relaxed shadow-sm"><code><span class="text-slate-400"># Download the latest stable ARM64 kubectl binary</span>
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
+
+<span class="text-slate-400"># Make it executable and move it to system path</span>
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+<span class="text-slate-400"># Verify installation</span>
+kubectl version --client</code></pre>
+                </div>
+            </div>
+
+            <!-- Sub-step 2 -->
+            <div class="space-y-2">
+                <h3 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-cube text-slate-400 text-sm"></i> 2. Install kind
+                </h3>
+                <div class="relative group">
+                    <button onclick="copyCode(this)" class="absolute right-3 top-3 bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded text-xs font-mono transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy"></i><span>Copy</span>
+                    </button>
+                    <pre class="bg-slate-900 text-slate-100 rounded-xl p-5 overflow-x-auto text-sm font-mono leading-relaxed shadow-sm"><code><span class="text-slate-400"># Download ARM64 kind binary</span>
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-arm64
+
+<span class="text-slate-400"># Make it executable and move it to system path</span>
+chmod +x ./kind
+sudo mv ./kind /usr/local/bin/kind
+
+<span class="text-slate-400"># Verify installation</span>
+kind version</code></pre>
+                </div>
+            </div>
+
+            <!-- Info Callout -->
+            <div class="bg-slate-100 border border-slate-300 rounded-xl p-4 text-slate-800 space-y-2">
+                <div class="flex items-center gap-2 font-semibold text-slate-900">
+                    <i class="fa-solid fa-circle-info text-slate-500"></i>
+                    <span>Alternative Engine (Minikube)</span>
+                </div>
+                <p class="text-sm text-slate-600">
+                    If you prefer <code class="bg-white border px-1 py-0.5 rounded font-mono text-xs">minikube</code> over <code class="bg-white border px-1 py-0.5 rounded font-mono text-xs">kind</code>, install the ARM64 binary:
+                </p>
+                <pre class="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto text-xs font-mono mt-2"><code>curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-arm64
+sudo install minikube-linux-arm64 /usr/local/bin/minikube
+minikube start --driver=docker</code></pre>
+            </div>
+        </section>
+
+        <!-- Step 3: Create Cluster -->
+        <section id="step-3" class="space-y-4">
+            <div class="flex items-center gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-sm">3</span>
+                <h2 class="text-2xl font-bold text-slate-900">Create a Local Kubernetes Cluster</h2>
+            </div>
+
+            <div class="space-y-2">
+                <h3 class="text-md font-medium text-slate-700">1. Provision Cluster with <code class="font-mono">kind</code></h3>
+                <div class="relative group">
+                    <pre class="bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto text-sm font-mono"><code>kind create cluster --name arm64-cluster</code></pre>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <h3 class="text-md font-medium text-slate-700">2. Verify Cluster Status</h3>
+                <div class="relative group">
+                    <pre class="bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto text-sm font-mono"><code>kubectl get nodes -o wide</code></pre>
+                </div>
+            </div>
+
+            <!-- Check Banner -->
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-900 flex items-start gap-3">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-lg mt-0.5"></i>
+                <div class="text-sm">
+                    <strong class="font-semibold text-emerald-950">Verification:</strong> Inspect the output column <code class="bg-emerald-100/80 px-1 py-0.5 rounded font-mono text-xs">ARCHITECTURE</code>. It should explicitly display <strong><code class="font-mono">arm64</code></strong>.
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 4: Deploy & Test Workloads -->
+        <section id="step-4" class="space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-sm">4</span>
+                <h2 class="text-2xl font-bold text-slate-900">Deploy & Test Sample Workloads</h2>
+            </div>
+
+            <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-900 space-y-1">
+                <div class="flex items-center gap-2 font-semibold text-rose-800">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                    <span>Architecture Compatibility</span>
+                </div>
+                <p class="text-sm text-rose-950">
+                    When targeting ARM64 nodes, verify that your container images support the <code class="bg-rose-100 px-1.5 py-0.5 rounded font-mono text-xs">linux/arm64</code> platform. Official images such as NGINX, Redis, and Curl natively support multi-architecture manifests.
+                </p>
+            </div>
+
+            <!-- Workload 1 -->
+            <div class="border border-slate-200 rounded-xl p-6 bg-white shadow-sm space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-indigo-600 inline-block"></span>
+                    Workload 1: NGINX Web Server Deployment
+                </h3>
+
+                <div class="space-y-2">
+                    <h4 class="text-sm font-semibold text-slate-700">1. Create Deployment & Expose Service</h4>
+                    <div class="relative group">
+                        <pre class="bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto text-sm font-mono leading-relaxed"><code><span class="text-slate-400"># Create a 2-replica NGINX deployment</span>
+kubectl create deployment nginx-test --image=nginx:alpine --replicas=2
+
+<span class="text-slate-400"># Expose deployment internally</span>
+kubectl expose deployment nginx-test --type=NodePort --port=80</code></pre>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="text-sm font-semibold text-slate-700">2. Verify Pod Status</h4>
+                    <div class="relative group">
+                        <pre class="bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto text-sm font-mono"><code>kubectl get pods -l app=nginx-test -o wide</code></pre>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="text-sm font-semibold text-slate-700">3. Test Connectivity via Port Forwarding</h4>
+                    <div class="relative group">
+                        <pre class="bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto text-sm font-mono leading-relaxed"><code><span class="text-slate-400"># Run port-forwarding in the background (survives SSH session drop)</span>
+nohup kubectl port-forward svc/nginx-test 8080:80 > /dev/null 2>&1 &
+
+<span class="text-slate-400"># Query the web server</span>
+curl http://localhost:8080
+
+<span class="text-slate-400"># Clean up background port-forward process</span>
+pkill -f "kubectl port-forward"</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workload 2 -->
+            <div class="border border-slate-200 rounded-xl p-6 bg-white shadow-sm space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-indigo-600 inline-block"></span>
+                    Workload 2: Stateless Microservice (<code class="font-mono text-indigo-600">echo-server</code>)
+                </h3>
+
+                <div class="space-y-2">
+                    <h4 class="text-sm font-semibold text-slate-700">1. Deploy the Application</h4>
+                    <div class="relative group">
+                        <pre class="bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto text-sm font-mono leading-relaxed"><code><span class="text-slate-400"># Deploy an HTTP Echo application</span>
+kubectl create deployment echo-app --image=ealen/echo-server:latest
+
+<span class="text-slate-400"># Expose via ClusterIP</span>
+kubectl expose deployment echo-app --type=ClusterIP --port=80 --target-port=80</code></pre>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="text-sm font-semibold text-slate-700">2. Test End-to-End Cluster Internal Routing</h4>
+                    <div class="relative group">
+                        <pre class="bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto text-sm font-mono leading-relaxed"><code><span class="text-slate-400"># Spin up an ephemeral container to query the internal service DNS</span>
+kubectl run test-curl --rm -i --restart=Never --image=curlimages/curl -- \
+  curl -s http://echo-app.default.svc.cluster.local</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 5: Cleanup -->
+        <section id="step-5" class="space-y-4">
+            <div class="flex items-center gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-sm">5</span>
+                <h2 class="text-2xl font-bold text-slate-900">Cleanup Resources</h2>
+            </div>
+            <p class="text-slate-600">When you are finished testing, clean up your environment using one of the following methods:</p>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="border border-slate-200 rounded-xl p-4 bg-white space-y-2">
+                    <h3 class="font-semibold text-slate-800 text-sm">Option A: Complete Teardown (Delete Cluster)</h3>
+                    <pre class="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto text-xs font-mono"><code>kind delete cluster --name arm64-cluster</code></pre>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl p-4 bg-white space-y-2">
+                    <h3 class="font-semibold text-slate-800 text-sm">Option B: Reset Default Namespace (Retain Cluster)</h3>
+                    <pre class="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto text-xs font-mono"><code>kubectl delete all --all -n default</code></pre>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-white mt-16 py-8">
+        <div class="max-w-5xl mx-auto px-4 text-center text-xs text-slate-500">
+            <p>Designed for deployment on GitHub Pages • Kubernetes on ARM64 Guide</p>
+        </div>
+    </footer>
+
+  <footer class="mt-12 pt-6 border-t border-slate-200 text-slate-600 text-sm">
+            <h2 class="text-base font-bold text-slate-800 m-0">Author - Pranesh Sathyanarayan</h2>
+            <p class="mt-1 font-medium">Published First : 27 Oct 2026</p>
+            <p class="mt-2 text-xs italic">
+                AI agent disclosure - no AI used to generate content, gemini AI was used only to perform markdown formatting and beautification.
+            </p>
+            <p class="mt-2 text-xs text-slate-500">
+                "This work is dedicated to the public domain under CC0 1.0 Universal. You are free to copy, modify, distribute, and perform the work, even for commercial purposes, all without asking permission."
+            </p>
+        </footer>
+
+    <!-- Copy Code Script -->
+    <script>
+        function copyCode(button) {
+            const pre = button.parentElement.querySelector('pre');
+            const codeText = pre.innerText;
+
+            navigator.clipboard.writeText(codeText).then(() => {
+                const icon = button.querySelector('i');
+                const span = button.querySelector('span');
+
+                icon.className = 'fa-solid fa-check text-emerald-400';
+                span.innerText = 'Copied!';
+
+                setTimeout(() => {
+                    icon.className = 'fa-regular fa-copy';
+                    span.innerText = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+
+   
+
+</body>
+</html>
