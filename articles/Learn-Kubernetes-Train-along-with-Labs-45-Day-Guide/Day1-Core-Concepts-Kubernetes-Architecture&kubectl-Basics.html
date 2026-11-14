@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 1: Core Concepts — Kubernetes Architecture &amp; kubectl Basics</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        code, pre {
+            font-family: 'Fira Code', monospace;
+        }
+        .prose pre {
+            background-color: #0d1117;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .prose pre code.hljs, 
+        .prose pre code[class*="language-"] {
+            color: #e2e8f0;
+        }
+        .prose code:not(pre code) {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+            border: 1px solid #cbd5e1;
+        }
+        .prose img {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            margin-left: 0 !important;
+            margin-right: auto !important;
+        }
+        .prose figure {
+            text-align: left !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+    <main class="max-w-4xl mx-auto bg-white p-6 sm:p-10 lg:p-12 rounded-xl shadow-sm border border-slate-200 prose prose-slate lg:prose-lg max-w-none">
+        
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-6">🚀 Day 1: Core Concepts — Kubernetes Architecture &amp; <code>kubectl</code> Basics</h1>
+
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 my-6 rounded-r-md">
+            <p class="font-bold text-blue-900 m-0">💡 Overview:</p>
+            <p class="text-blue-800 m-0 mt-1">Here are the exact commands and configuration manifests to complete <strong class="font-semibold text-blue-950">Task 1</strong> and <strong class="font-semibold text-blue-950">Task 1.2</strong> for your CKA preparation, alongside deep-dive inspections of cluster nodes, control plane components, and <code>etcd</code>.</p>
+        </div>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">📋 Task 1: Cluster Setup &amp; Pod Deployment</h2>
+            <p>You can create this directly in your terminal using a single YAML manifest file, which is the standard practice for Kubernetes administration.</p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Step-by-Step Implementation</h3>
+
+            <div class="bg-slate-100 border-l-4 border-slate-400 px-4 py-2 my-4 rounded-r-md text-sm text-slate-700">
+                ⏱️ <strong class="font-semibold text-slate-900">Estimated Time:</strong> 1 min
+            </div>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">1. Create the Namespace</h4>
+            <p>Create the dedicated namespace for your lab workloads.</p>
+
+            <pre><code class="language-bash">kubectl create namespace lab-workloads</code></pre>
+
+            <ul class="list-disc pl-6 space-y-1 text-slate-700 mt-3">
+                <li><strong class="font-semibold text-slate-900">Verification:</strong> Run <code>kubectl get namespace lab-workloads</code> and confirm it shows status <code>Active</code>.</li>
+            </ul>
+
+            <hr class="my-6 border-slate-200">
+
+            <div class="bg-slate-100 border-l-4 border-slate-400 px-4 py-2 my-4 rounded-r-md text-sm text-slate-700">
+                ⏱️ <strong class="font-semibold text-slate-900">Estimated Time:</strong> 2 min
+            </div>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">2. Create the Pod Manifest File</h4>
+            <p>Create a YAML file named <code>pod-lab.yaml</code> containing the pod definition with resource limits, requests, and the HTTP liveness probe:</p>
+
+            <pre><code class="language-bash">cat &lt;&lt;EOF &gt; pod-lab.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-app
+  namespace: lab-workloads
+  labels:
+    app: web-app
+spec:
+  containers:
+  - name: nginx
+    image: nginx:alpine
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "64Mi"
+      limits:
+        cpu: "250m"
+        memory: "128Mi"
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 5
+EOF</code></pre>
+
+            <ul class="list-disc pl-6 space-y-1 text-slate-700 mt-3">
+                <li><strong class="font-semibold text-slate-900">Verification:</strong> Run <code>cat pod-lab.yaml</code> to confirm the contents were written correctly.</li>
+            </ul>
+
+            <hr class="my-6 border-slate-200">
+
+            <div class="bg-slate-100 border-l-4 border-slate-400 px-4 py-2 my-4 rounded-r-md text-sm text-slate-700">
+                ⏱️ <strong class="font-semibold text-slate-900">Estimated Time:</strong> 1 min
+            </div>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">3. Deploy the Pod</h4>
+            <p>Apply the manifest file to your cluster.</p>
+
+            <pre><code class="language-bash">kubectl apply -f pod-lab.yaml</code></pre>
+
+            <ul class="list-disc pl-6 space-y-1 text-slate-700 mt-3">
+                <li><strong class="font-semibold text-slate-900">Verification:</strong> The output will confirm <code>pod/web-app created</code>.</li>
+            </ul>
+
+            <hr class="my-6 border-slate-200">
+
+            <div class="bg-slate-100 border-l-4 border-slate-400 px-4 py-2 my-4 rounded-r-md text-sm text-slate-700">
+                ⏱️ <strong class="font-semibold text-slate-900">Estimated Time:</strong> 1 min
+            </div>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">4. Verify Pod Status and Probe Configuration</h4>
+            <p>Check that the pod successfully transitions to the <code>Running</code> state and inspect its details:</p>
+
+            <pre><code class="language-bash">kubectl get pods -n lab-workloads -o wide</code></pre>
+
+            <p class="mt-4">To verify that the resource requests, limits, and liveness probe are correctly active, run:</p>
+
+            <pre><code class="language-bash">kubectl describe pod web-app -n lab-workloads</code></pre>
+
+            <ul class="list-disc pl-6 space-y-1 text-slate-700 mt-3">
+                <li><strong class="font-semibold text-slate-900">Verification:</strong> Look for <code>Liveness: http-get http://:80/ delay=5s timeout=1s period=10s #success=1 #failure=3</code> and confirm the pod status is <code>Running</code>.</li>
+            </ul>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">🖥️ Terminal Session Execution Log</h2>
+
+            <pre><code class="language-console">ubuntu@vnic-01:~$ alias k=kubectl
+ubuntu@vnic-01:~$ k get nodes
+NAME                          STATUS   ROLES           AGE     VERSION
+arm64-cluster-control-plane   Ready    control-plane   3d23h   v1.29.2
+ubuntu@vnic-01:~$ kubectl create namespace lab-workloads
+namespace/lab-workloads created
+ubuntu@vnic-01:~$ cat &lt;&lt;EOF &gt; pod-lab.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-app
+  namespace: lab-workloads
+  labels:
+    app: web-app
+spec:
+  containers:
+  - name: nginx
+    image: nginx:alpine
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "64Mi"
+      limits:
+        cpu: "250m"
+        memory: "128Mi"
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 5
+EOF
+ubuntu@vnic-01:~$ cat pod-lab.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-app
+  namespace: lab-workloads
+  labels:
+    app: web-app
+spec:
+  containers:
+  - name: nginx
+    image: nginx:alpine
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "64Mi"
+      limits:
+        cpu: "250m"
+        memory: "128Mi"
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 5
+ubuntu@vnic-01:~$ kubectl apply -f pod-lab.yaml
+pod/web-app created
+ubuntu@vnic-01:~$ kubectl get pods -n lab-workloads -o wide
+NAME      READY   STATUS    RESTARTS   AGE   IP           NODE                          NOMINATED NODE   READINESS GATES
+web-app   1/1     Running   0          9s    10.244.0.5   arm64-cluster-control-plane   &lt;none&gt;           &lt;none&gt;
+ubuntu@vnic-01:~$ kubectl describe pod web-app -n lab-workloads
+Name:             web-app
+Namespace:        lab-workloads
+Priority:         0
+Service Account:  default
+Node:             arm64-cluster-control-plane/172.18.0.2
+Start Time:       Wed, 11 Nov 2026 04:34:29 +0000
+Labels:           app=web-app
+Annotations:      &lt;none&gt;
+Status:           Running
+IP:               10.244.0.5
+IPs:
+  IP:  10.244.0.5
+Containers:
+  nginx:
+    Container ID:   containerd://8eb4e86daf45d7480c9074f4cd08e008348f9f23d81a4fe57d3bcbbe53c8bb29
+    Image:          nginx:alpine
+    Image ID:       docker.io/library/nginx@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11
+    Port:           &lt;none&gt;
+    Host Port:      &lt;none&gt;
+    State:          Running
+      Started:      Wed, 11 Nov 2026 04:34:30 +0000
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     250m
+      memory:  128Mi
+    Requests:
+      cpu:        100m
+      memory:     64Mi
+    Liveness:     http-get http://:80/ delay=5s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Environment:  &lt;none&gt;
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-cvx96 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       True
+  ContainersReady             True
+  PodScheduled                True
+Volumes:
+  kube-api-access-cvx96:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              &lt;none&gt;
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  30s   default-scheduler  Successfully assigned lab-workloads/web-app to arm64-cluster-control-plane
+  Normal  Pulled     30s   kubelet            spec.containers{nginx}: Container image "nginx:alpine" already present on machine
+  Normal  Created    30s   kubelet: Created container nginx
+  Normal  Started    29s   kubelet            spec.containers{nginx}: Started container nginx
+ubuntu@vnic-01:~$ ls
+pod-lab.yaml
+ubuntu@vnic-01:~$ rm pod-lab.yaml</code></pre>
+
+            <hr class="my-6 border-slate-200">
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 my-6 rounded-r-md">
+                <p class="font-bold text-blue-900 m-0">💡 PRO TIP: Understanding Automatic Service Account Mounts</p>
+                <p class="text-blue-800 m-0 mt-2">
+                    In <code>describe</code> output you see:<br>
+                    <code>Mounts: /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-cvx96 (ro)</code>
+                </p>
+                <p class="text-blue-800 m-0 mt-2">
+                    Every Kubernetes Pod automatically receives a <strong class="font-semibold text-blue-950">Service Account</strong> token mounted into its filesystem. This is what that specific mount is doing:
+                </p>
+                <ul class="list-disc pl-6 mt-2 space-y-1 text-blue-800">
+                    <li><strong class="font-semibold text-blue-950">What it is:</strong> Kubernetes automatically creates a service account (named <code>default</code> unless specified otherwise) for every namespace and generates a short-lived authentication token, a Certificate Authority (<code>ca.crt</code>), and the cluster's namespace metadata.</li>
+                    <li><strong class="font-semibold text-blue-950">Where it lives:</strong> It gets mounted dynamically into every container inside the pod at <code>/var/run/secrets/kubernetes.io/serviceaccount</code> as read-only (<code>ro</code>).</li>
+                    <li><strong class="font-semibold text-blue-950">What it's used for:</strong> It allows applications running inside the container to securely authenticate and talk back to the Kubernetes API server (e.g., if your app needs to query cluster resources, create other pods, or watch configuration maps) without you having to manually embed credentials or passwords inside your container image.</li>
+                </ul>
+                <p class="text-blue-800 m-0 mt-2 italic">If your application doesn't interact with the Kubernetes API, it simply ignores this directory.</p>
+            </div>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">🔍 Task 2: Cluster Inspection &amp; Troubleshooting</h2>
+            <p>Here are the exact <code>kubectl</code> commands to complete <strong class="font-semibold text-slate-900">Task 1.2</strong> (Cluster Inspection &amp; Troubleshooting), along with what to look for in the output.</p>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Step-by-Step Commands for Task 2</h3>
+
+            <div class="bg-slate-100 border-l-4 border-slate-400 px-4 py-2 my-4 rounded-r-md text-sm text-slate-700">
+                ⏱️ <strong class="font-semibold text-slate-900">Estimated Time:</strong> 1 min
+            </div>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">1. Inspect Cluster Nodes</h4>
+            <p>List all nodes in your <code>kind</code> cluster and show their architecture, OS, and status.</p>
+
+            <pre><code class="language-bash">kubectl get nodes -o wide</code></pre>
+
+            <ul class="list-disc pl-6 space-y-1 text-slate-700 mt-3">
+                <li><strong class="font-semibold text-slate-900">Verification:</strong> You should see your cluster node listed with <code>Ready</code> status, and the <code>ARCHITECTURE</code> column showing <code>arm64</code>.</li>
+            </ul>
+
+            <hr class="my-6 border-slate-200">
+
+            <div class="bg-slate-100 border-l-4 border-slate-400 px-4 py-2 my-4 rounded-r-md text-sm text-slate-700">
+                ⏱️ <strong class="font-semibold text-slate-900">Estimated Time:</strong> 1 min
+            </div>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">2. Inspect Control Plane &amp; System Pods</h4>
+            <p>View all system pods running in the <code>kube-system</code> namespace. This is where control plane components (<code>kube-apiserver</code>, <code>etcd</code>, <code>kube-scheduler</code>, etc.) live.</p>
+
+            <pre><code class="language-bash">kubectl get pods -n kube-system</code></pre>
+
+            <ul class="list-disc pl-6 space-y-1 text-slate-700 mt-3">
+                <li><strong class="font-semibold text-slate-900">Verification:</strong> All system pods (like <code>etcd-arm64-cluster</code>, <code>kube-apiserver-arm64-cluster</code>, and <code>kube-proxy</code>) should display a status of <code>Running</code> with <code>1/1</code> ready containers.</li>
+            </ul>
+
+            <hr class="my-6 border-slate-200">
+
+            <div class="bg-slate-100 border-l-4 border-slate-400 px-4 py-2 my-4 rounded-r-md text-sm text-slate-700">
+                ⏱️ <strong class="font-semibold text-slate-900">Estimated Time:</strong> 2 min
+            </div>
+
+            <h4 class="text-lg font-semibold text-slate-900 mt-4 mb-2">3. Describe a Control Plane Component</h4>
+            <p>Inspect the detailed configuration, container image version, and arguments of the <code>etcd</code> pod in the control plane.</p>
+
+            <pre><code class="language-bash">kubectl describe pod -l component=etcd -n kube-system</code></pre>
+
+            <ul class="list-disc pl-6 space-y-1 text-slate-700 mt-3">
+                <li><strong class="font-semibold text-slate-900">Verification:</strong> Look through the output to check the container image name, environment variables, and verify that volume mounts point correctly to host paths for persistence.</li>
+            </ul>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">📊 Deep-Dive Node Inspection Analysis</h2>
+            <p>Here's a field-by-field breakdown of your <code>kubectl get nodes -o wide</code> output:</p>
+
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Field</th>
+                            <th class="p-3 border border-slate-200">Value</th>
+                            <th class="p-3 border border-slate-200">Explanation</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">NAME</td>
+                            <td class="p-3 border border-slate-200"><code>arm64-cluster-control-plane</code></td>
+                            <td class="p-3 border border-slate-200">The node's hostname. This is a <strong class="font-semibold text-slate-900">Kind</strong> (Kubernetes IN Docker) cluster named <code>arm64-cluster</code>. The suffix <code>-control-plane</code> is Kind's default naming for the control-plane node. The <code>arm64</code> prefix tells you it's running on an ARM64 machine (Apple Silicon, Graviton, or similar).</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">STATUS</td>
+                            <td class="p-3 border border-slate-200"><code>Ready</code></td>
+                            <td class="p-3 border border-slate-200">The kubelet has passed all health checks (sufficient memory, disk, PID, network). The node is schedulable and can accept pods.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">ROLES</td>
+                            <td class="p-3 border border-slate-200"><code>control-plane</code></td>
+                            <td class="p-3 border border-slate-200">This node runs the <strong class="font-semibold text-slate-900">API server</strong>, <strong class="font-semibold text-slate-900">scheduler</strong>, <strong class="font-semibold text-slate-900">controller-manager</strong>, and <strong class="font-semibold text-slate-900">etcd</strong>. Kind's default single-node cluster has only this one node. In production you'd also see worker nodes with role <code>&lt;none&gt;</code>. Kind control-plane nodes carry a taint (<code>node-role.kubernetes.io/control-plane:NoSchedule</code>) that prevents regular pods from scheduling there unless you explicitly tolerate it.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">AGE</td>
+                            <td class="p-3 border border-slate-200"><code>3d23h</code></td>
+                            <td class="p-3 border border-slate-200">The node registered with the cluster ~4 days ago (3 days, 23 hours).</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">VERSION</td>
+                            <td class="p-3 border border-slate-200"><code>v1.29.2</code></td>
+                            <td class="p-3 border border-slate-200">The kubelet/Kubernetes version. ⚠️ <strong class="font-semibold text-slate-900">Kubernetes 1.29 reached EOL on Feb 28, 2025</strong> — it no longer receives security patches. You should upgrade (e.g., <code>kind create cluster --image kindest/node:v1.34.x</code>).</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">INTERNAL-IP</td>
+                            <td class="p-3 border border-slate-200"><code>172.18.0.2</code></td>
+                            <td class="p-3 border border-slate-200">The IP on Docker's bridge network. Since Kind runs each node as a <strong class="font-semibold text-slate-900">Docker container</strong>, this is the container's internal IP, not a real network address. It's only reachable from the host and other containers on the same Docker network.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">EXTERNAL-IP</td>
+                            <td class="p-3 border border-slate-200"><code>&lt;none&gt;</code></td>
+                            <td class="p-3 border border-slate-200">No public/external IP. Completely expected for a local Kind cluster — it has no internet-facing address.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">OS-IMAGE</td>
+                            <td class="p-3 border border-slate-200"><code>Debian GNU/Linux 12 (bookworm)</code></td>
+                            <td class="p-3 border border-slate-200">The <strong class="font-semibold text-slate-900">container image</strong> inside the Kind node (not your host OS). Kind's default node images are Debian-based. This is what runs inside the Docker container that <em>is</em> the Kubernetes node.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">KERNEL-VERSION</td>
+                            <td class="p-3 border border-slate-200"><code>7.0.0-1013-oracle</code></td>
+                            <td class="p-3 border border-slate-200">The <strong class="font-semibold text-slate-900">host</strong> kernel (the VM/machine running Docker), <em>not</em> the container's. The <code>oracle</code> flavor means your host is an <strong class="font-semibold text-slate-900">Oracle Cloud Infrastructure (OCI)</strong> VM. Kernel <strong class="font-semibold text-slate-900">7.0.0</strong> was released upstream on <strong class="font-semibold text-slate-900">April 12, 2026</strong>; <code>-1013</code> is the 13th patch in that series. This is a very recent kernel.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">CONTAINER-RUNTIME</td>
+                            <td class="p-3 border border-slate-200"><code>containerd://1.7.13</code></td>
+                            <td class="p-3 border border-slate-200">The container runtime inside the node is <strong class="font-semibold text-slate-900">containerd</strong> v1.7.13 (released July 2024, updated runc to fix CVE-2024-21626). ⚠️ <strong class="font-semibold text-slate-900">containerd 1.7 reached end-of-life on September 30, 2026</strong> — no more security patches. If you upgrade the cluster, the new Kind image will ship containerd 2.x.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">📌 Key Takeaways</h3>
+            <ul class="list-disc pl-6 space-y-2 text-slate-700">
+                <li><strong class="font-semibold text-slate-900">It's a single-node Kind cluster</strong> on an ARM64 OCI VM — fine for local dev/testing, not for production.</li>
+                <li><strong class="font-semibold text-slate-900">Both Kubernetes 1.29 and containerd 1.7 are EOL.</strong> If this is more than a throwaway experiment, recreate the cluster with a newer image:
+<pre class="mt-2"><code class="language-bash">kind delete cluster --name arm64-cluster
+kind create cluster --name arm64-cluster --image kindest/node:v1.34.2</code></pre>
+                </li>
+                <li>The <code>172.18.0.2</code> IP and <code>&lt;none&gt;</code> external IP are normal for Kind — don't confuse them with a real cluster's networking.</li>
+            </ul>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">🛠️ System Pods Analysis (<code>kube-system</code>)</h2>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Command Output</h3>
+            <pre><code class="language-console">NAME                                                  READY   STATUS    RESTARTS      AGE
+coredns-76f75df574-bl7br                              1/1     Running   1 (87m ago)   4d
+coredns-76f75df574-gwvz7                              1/1     Running   1 (87m ago)   4d
+etcd-arm64-cluster-control-plane                      1/1     Running   1 (87m ago)   4d
+kindnet-8fzw8                                         1/1     Running   1 (87m ago)   4d
+kube-apiserver-arm64-cluster-control-plane            1/1     Running   1 (87m ago)   4d
+kube-controller-manager-arm64-cluster-control-plane   1/1     Running   1 (87m ago)   4d
+kube-proxy-xbqft                                      1/1     Running   1 (87m ago)   4d
+kube-scheduler-arm64-cluster-control-plane            1/1     Running   1 (87m ago)   4d</code></pre>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Table Output Columns</h3>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Column</th>
+                            <th class="p-3 border border-slate-200">Meaning</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">NAME</td>
+                            <td class="p-3 border border-slate-200">Pod name. DaemonSet pods get a random suffix (e.g. <code>xbqft</code>); ReplicaSet pods get a hash + random suffix (e.g. <code>76f75df574-bl7br</code>).</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">READY</td>
+                            <td class="p-3 border border-slate-200"><code>1/1</code> = 1 of 1 containers in the pod is ready (passed its readiness probe).</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">STATUS</td>
+                            <td class="p-3 border border-slate-200"><code>Running</code> = the container is up and the kubelet is managing it.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">RESTARTS</td>
+                            <td class="p-3 border border-slate-200">How many times the container has restarted since the pod was created. <code>1 (87m ago)</code> means it restarted <strong class="font-semibold text-slate-900">once</strong>, and that restart happened 87 minutes ago.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">AGE</td>
+                            <td class="p-3 border border-slate-200">How long the pod has existed (4 days, matching your node age).</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Detailed Breakdown of Components</h3>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Pod</th>
+                            <th class="p-3 border border-slate-200">What it is</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>coredns-76f75df574-bl7br</code> / <code>…-gwvz7</code></td>
+                            <td class="p-3 border border-slate-200"><strong class="font-semibold text-slate-900">CoreDNS</strong> — the cluster's DNS resolver. Two replicas for high availability. Every <code>Service</code> name (e.g. <code>my-svc.default.svc.cluster.local</code>) is resolved by this.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>etcd-arm64-cluster-control-plane</code></td>
+                            <td class="p-3 border border-slate-200"><strong class="font-semibold text-slate-900">etcd</strong> — the distributed key-value store that holds <em>all</em> cluster state (pods, services, secrets, etc.). The most critical component; if it dies, the cluster is down.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>kindnet-8fzw8</code></td>
+                            <td class="p-3 border border-slate-200"><strong class="font-semibold text-slate-900">KindNet</strong> — Kind's minimal CNI plugin. It's the network layer that gives pods IPs and routes traffic between them. (In production you'd use Calico, Cilium, etc.)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>kube-apiserver-arm64-cluster-control-plane</code></td>
+                            <td class="p-3 border border-slate-200"><strong class="font-semibold text-slate-900">API Server</strong> — the front door of Kubernetes. Every <code>kubectl</code> command, every controller, every kubelet talks to this. It's the single point of entry.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>kube-controller-manager-arm64-cluster-control-plane</code></td>
+                            <td class="p-3 border border-slate-200"><strong class="font-semibold text-slate-900">Controller Manager</strong> — runs the control loops (node controller, job controller, replicaset controller, etc.) that reconcile desired state vs. actual state.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>kube-proxy-xbqft</code></td>
+                            <td class="p-3 border border-slate-200"><strong class="font-semibold text-slate-900">kube-proxy</strong> — maintains the network rules (iptables/IPVS) on each node so that <code>Service</code> IPs get load-balanced to the right pod IPs.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>kube-scheduler-arm64-cluster-control-plane</code></td>
+                            <td class="p-3 border border-slate-200"><strong class="font-semibold text-slate-900">Scheduler</strong> — watches for unscheduled pods and picks which node each one should run on, based on resources, taints, affinity, etc.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 my-6 rounded-r-md">
+                <p class="font-bold text-amber-900 m-0">🔍 Investigation: The <code>1 (87m ago)</code> Restart</p>
+                <p class="text-amber-800 m-0 mt-2">All pods restarted at the same time ~87 minutes ago. Most likely causes on a Kind cluster:</p>
+                <ul class="list-disc pl-6 mt-1 space-y-1 text-amber-800">
+                    <li>The <strong class="font-semibold text-amber-950">Docker container</strong> (i.e. the node) was restarted (e.g. <code>docker restart</code> on the Kind container, or the OCI VM was rebooted).</li>
+                    <li>A <strong class="font-semibold text-amber-950">kubelet restart</strong> inside the container.</li>
+                </ul>
+                <p class="text-amber-800 m-0 mt-2">You can confirm with:</p>
+                <pre class="mt-2 mb-2"><code class="language-bash">kubectl describe pod etcd-arm64-cluster-control-plane -n kube-system | grep -A5 "Last State"</code></pre>
+                <p class="text-amber-800 m-0">It'll show the exit code and reason (e.g. <code>OOMKilled</code>, <code>Error</code>, or just a clean restart).</p>
+            </div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 my-6 rounded-r-md">
+                <p class="font-bold text-blue-900 m-0">💡 TL;DR:</p>
+                <p class="text-blue-800 m-0 mt-1">This is a <strong class="font-semibold text-blue-950">completely healthy, standard single-node Kind cluster</strong>. All 7 control-plane/system pods are running, no crashes in the last 87 minutes, and the one restart was a simultaneous event (likely a node/Docker restart). Nothing is wrong.</p>
+            </div>
+        </section>
+
+        <hr class="my-8 border-slate-200">
+
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">🔬 etcd Pod Inspection Deep-Dive</h2>
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Output of <code>kubectl describe pod -l component=etcd -n kube-system</code></h3>
+            <pre><code class="language-console">Name:                 etcd-arm64-cluster-control-plane
+Namespace:            kube-system
+Priority:             2000001000
+Priority Class Name:  system-node-critical
+Node:                 arm64-cluster-control-plane/172.18.0.2
+Start Time:           Wed, 11 Nov 2026 03:37:19 +0000
+Labels:               component=etcd
+                      tier=control-plane
+Annotations:          kubeadm.kubernetes.io/etcd.advertise-client-urls: https://172.18.0.2:2379
+                      kubernetes.io/config.hash: 08fa1228f0f495ea0480ab001d75ebe7
+                      kubernetes.io/config.mirror: 08fa1228f0f495ea0480ab001d75ebe7
+                      kubernetes.io/config.seen: 2026-11-07T04:53:12.581956148Z
+                      kubernetes.io/config.source: file
+Status:               Running
+SeccompProfile:       RuntimeDefault
+IP:                   172.18.0.2
+IPs:
+  IP:           172.18.0.2
+Controlled By:  Node/arm64-cluster-control-plane
+Containers:
+  etcd:
+    Container ID:  containerd://5f60355fb7494d09cacdacf2f007f2666fd52d1aa1706e5a484797efd25e7ad6
+    Image:         registry.k8s.io/etcd:3.5.10-0
+    Image ID:      sha256:79f8d13ae8b8839cadfb2f83416935f5184206d386028e2d1263577f0ab3620b
+    Port:          &lt;none&gt;
+    Host Port:     &lt;none&gt;
+    Command:
+      etcd
+      --advertise-client-urls=https://172.18.0.2:2379
+      --cert-file=/etc/kubernetes/pki/etcd/server.crt
+      --client-cert-auth=true
+      --data-dir=/var/lib/etcd
+      --experimental-initial-corrupt-check=true
+      --experimental-watch-progress-notify-interval=5s
+      --initial-advertise-peer-urls=https://172.18.0.2:2380
+      --initial-cluster=arm64-cluster-control-plane=https://172.18.0.2:2380
+      --key-file=/etc/kubernetes/pki/etcd/server.key
+      --listen-client-urls=https://127.0.0.1:2379,https://172.18.0.2:2379
+      --listen-metrics-urls=http://127.0.0.1:2381
+      --listen-peer-urls=https://172.18.0.2:2380
+      --name=arm64-cluster-control-plane
+      --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt
+      --peer-client-cert-auth=true
+      --peer-key-file=/etc/kubernetes/pki/etcd/peer.key
+      --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+      --snapshot-count=10000
+      --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+    State:          Running
+      Started:      Wed, 11 Nov 2026 03:37:21 +0000
+    Last State:     Terminated
+      Reason:       Unknown
+      Exit Code:    255
+      Started:      Sat, 07 Nov 2026 04:53:06 +0000
+      Finished:     Wed, 11 Nov 2026 03:37:17 +0000
+    Ready:          True
+    Restart Count:  1
+    Requests:
+      cpu:        100m
+      memory:     100Mi
+    Liveness:     http-get http://127.0.0.1:2381/health%3Fexclude=NOSPACE&amp;serializable=true delay=10s timeout=15s period=10s successThreshold=1 failureThreshold=8
+    Startup:      http-get http://127.0.0.1:2381/health%3Fserializable=false delay=10s timeout=15s period=10s successThreshold=1 failureThreshold=24
+    Environment:  &lt;none&gt;
+    Mounts:
+      /etc/kubernetes/pki/etcd from etcd-certs (rw)
+      /var/lib/etcd from etcd-data (rw)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       True
+  ContainersReady             True
+  PodScheduled                True
+Volumes:
+  etcd-certs:
+    Type:          HostPath (bare host directory volume)
+    Path:          /etc/kubernetes/pki/etcd
+    HostPathType:  DirectoryOrCreate
+  etcd-data:
+    Type:          HostPath (bare host directory volume)
+    Path:          /var/lib/etcd
+    HostPathType:  DirectoryOrCreate
+QoS Class:         Burstable
+Node-Selectors:    &lt;none&gt;
+Tolerations:       :NoExecute op=Exists
+Events:            &lt;none&gt;</code></pre>
+
+            <hr class="my-6 border-slate-200">
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Identity &amp; Scheduling Breakdown</h3>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Field</th>
+                            <th class="p-3 border border-slate-200">Meaning</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Name / Namespace</td>
+                            <td class="p-3 border border-slate-200"><code>etcd-arm64-cluster-control-plane</code> in <code>kube-system</code>. Named after the node because etcd is a <strong class="font-semibold text-slate-900">static pod</strong> (see below).</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Priority / Priority Class</td>
+                            <td class="p-3 border border-slate-200"><code>system-node-critical</code> (2000001000) — the highest priority class. If the node runs out of resources, the kubelet will evict lower-priority pods first; etcd is never evicted.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Node</td>
+                            <td class="p-3 border border-slate-200"><code>arm64-cluster-control-plane/172.18.0.2</code> — pinned to this specific node.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Controlled By</td>
+                            <td class="p-3 border border-slate-200"><code>Node/arm64-cluster-control-plane</code> — this is a <strong class="font-semibold text-slate-900">static pod</strong>. It's not created by a Deployment/StatefulSet; the kubelet reads a manifest file on disk (<code>/etc/kubernetes/manifests/etcd.yaml</code>) and runs it directly. That's why there's no ReplicaSet or Deployment above it.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Labels</td>
+                            <td class="p-3 border border-slate-200"><code>component=etcd</code>, <code>tier=control-plane</code> — used by <code>kubectl get pods -l component=etcd</code> (which is how you selected it).</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="my-6 border-slate-200">
+
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 my-6 rounded-r-md">
+                <p class="font-bold text-amber-900 m-0">🕵️ The Restart — Mystery Solved</p>
+                <p class="text-amber-800 m-0 mt-2">This is the important part:</p>
+                <pre class="mt-2 mb-2"><code class="language-console">State:          Running
+  Started:      Wed, 11 Nov 2026 03:37:21 +0000
+Last State:     Terminated
+  Reason:       Unknown
+  Exit Code:    255
+  Started:      Sat, 07 Nov 2026 04:53:06 +0000
+  Finished:     Wed, 11 Nov 2026 03:37:17 +0000</code></pre>
+                <ul class="list-disc pl-6 mt-2 space-y-1 text-amber-800">
+                    <li>The previous container ran from <strong class="font-semibold text-amber-950">Nov 7 04:53</strong> to <strong class="font-semibold text-amber-950">Nov 11 03:37:17</strong> (~3 days 23 hours).</li>
+                    <li>It exited with <strong class="font-semibold text-amber-950">code 255, reason "Unknown"</strong> — this means the process was <strong class="font-semibold text-amber-950">killed externally</strong> (SIGKILL) rather than exiting cleanly. The container runtime couldn't capture a graceful exit.</li>
+                    <li>The new container started <strong class="font-semibold text-amber-950">4 seconds later</strong> at 03:37:21.</li>
+                </ul>
+                <p class="text-amber-800 m-0 mt-2">
+                    <strong class="font-semibold text-amber-950">What happened:</strong> The Docker container (your Kind node) was stopped/restarted at 03:37:17 UTC today. When the container stops, all processes inside die instantly (hence 255/Unknown). When it restarts, the kubelet re-runs the static pod manifest, and etcd comes back up. This is <strong class="font-semibold text-amber-950">completely normal</strong> for Kind — it's not an etcd crash.
+                </p>
+                <p class="text-amber-800 m-0 mt-2">
+                    This also explains the <code>1 (87m ago)</code> you saw in <code>kubectl get pods</code> — 87 minutes before you ran that command ≈ 03:37 UTC.
+                </p>
+            </div>
+
+            <hr class="my-6 border-slate-200">
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Important etcd Command Flags</h3>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Flag</th>
+                            <th class="p-3 border border-slate-200">Meaning</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>--data-dir=/var/lib/etcd</code></td>
+                            <td class="p-3 border border-slate-200">Where etcd stores its data (rocksdb/bolt files). Mounted from the host.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>--advertise-client-urls=https://172.18.0.2:2379</code></td>
+                            <td class="p-3 border border-slate-200">The URL clients (API server) use to talk to etcd.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>--listen-client-urls=https://127.0.0.1:2379,https://172.18.0.2:2379</code></td>
+                            <td class="p-3 border border-slate-200">etcd listens on loopback <strong class="font-semibold text-slate-900">and</strong> the node IP.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>--initial-cluster=arm64-cluster-control-plane=https://172.18.0.2:2380</code></td>
+                            <td class="p-3 border border-slate-200">The cluster membership. Single member (single-node Kind). In a multi-node cluster this would list all members.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>--listen-peer-urls=https://172.18.0.2:2380</code></td>
+                            <td class="p-3 border border-slate-200">Port for inter-member communication (Raft). Unused in single-node but required.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>--snapshot-count=10000</code></td>
+                            <td class="p-3 border border-slate-200">Take a snapshot every 10,000 compactions. Prevents the WAL from growing unbounded.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>--experimental-initial-corrupt-check=true</code></td>
+                            <td class="p-3 border border-slate-200">On startup, verify data integrity before serving. If corrupted, etcd refuses to start (safer than serving bad data).</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>--experimental-watch-progress-notify-interval=5s</code></td>
+                            <td class="p-3 border border-slate-200">Send keepalive notifications to watchers every 5s even if no data changed. Prevents watchers from timing out on quiet clusters.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>--client-cert-auth=true</code> / <code>--peer-client-cert-auth=true</code></td>
+                            <td class="p-3 border border-slate-200">TLS mutual authentication for both client and peer connections.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>--trusted-ca-file</code> / <code>--peer-trusted-ca-file</code></td>
+                            <td class="p-3 border border-slate-200">CA bundle for verifying certificates.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="my-6 border-slate-200">
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Probes Configuration</h3>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Probe</th>
+                            <th class="p-3 border border-slate-200">What it does</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Startup</td>
+                            <td class="p-3 border border-slate-200"><code>GET http://127.0.0.1:2381/health?serializable=false</code> every 10s, up to 24 tries (240s max). Gives etcd time to recover from a snapshot on boot before the liveness probe starts.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-semibold">Liveness</td>
+                            <td class="p-3 border border-slate-200"><code>GET http://127.0.0.1:2381/health?exclude=NOSPACE&amp;serializable=true</code> every 10s, 8 failures = kill. The <code>exclude=NOSPACE</code> means "don't fail the probe just because the disk is full" (that's a separate condition). If etcd stops responding, the kubelet restarts the container.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-slate-100 border-l-4 border-slate-500 p-4 my-6 rounded-r-md">
+                <p class="font-bold text-slate-900 m-0">📌 Note:</p>
+                <p class="text-slate-700 m-0 mt-1">Both probes hit the <strong class="font-semibold text-slate-900">metrics endpoint</strong> (port 2381), not the client port (2379). This is intentional — the health check shouldn't consume a client connection slot.</p>
+            </div>
+
+            <hr class="my-6 border-slate-200">
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Volume Configurations</h3>
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left border-collapse border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800">
+                            <th class="p-3 border border-slate-200">Volume</th>
+                            <th class="p-3 border border-slate-200">Type</th>
+                            <th class="p-3 border border-slate-200">Path</th>
+                            <th class="p-3 border border-slate-200">Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>etcd-certs</code></td>
+                            <td class="p-3 border border-slate-200">HostPath</td>
+                            <td class="p-3 border border-slate-200"><code>/etc/kubernetes/pki/etcd</code></td>
+                            <td class="p-3 border border-slate-200">TLS certs/keys for etcd. <code>DirectoryOrCreate</code> means if it doesn't exist, create an empty dir (won't fail the pod).</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200"><code>etcd-data</code></td>
+                            <td class="p-3 border border-slate-200">HostPath</td>
+                            <td class="p-3 border border-slate-200"><code>/var/lib/etcd</code></td>
+                            <td class="p-3 border border-slate-200"><strong class="font-semibold text-slate-900">The actual database.</strong> This is why etcd is a static pod with HostPath — the data must survive container restarts. If this were an <code>emptyDir</code>, etcd would lose all cluster state on restart.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="my-6 border-slate-200">
+
+            <h3 class="text-xl font-bold text-slate-900 mt-6 mb-3">Quality of Service (QoS) Class</h3>
+            <p>
+                <strong class="font-semibold text-slate-900">Burstable</strong> — because it has resource <em>requests</em> (100m CPU, 100Mi memory) but no <em>limits</em>. The kubelet guarantees at least 100m/100Mi but allows etcd to use more if the node has headroom. It will be the <strong class="font-semibold text-slate-900">last</strong> to be evicted under memory pressure (thanks to the priority class), but the QoS class itself just determines eviction <em>ordering within the same priority</em>.
+            </p>
+
+            <hr class="my-6 border-slate-200">
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 my-6 rounded-r-md">
+                <p class="font-bold text-blue-900 m-0">💡 TL;DR:</p>
+                <p class="text-blue-800 m-0 mt-1">
+                    Everything is healthy. The single restart was caused by the <strong class="font-semibold text-blue-950">Docker container (node) being restarted</strong> today at 03:37 UTC — not by an etcd failure. The <code>Exit Code: 255 / Reason: Unknown</code> is the fingerprint of an external kill, which is exactly what you'd expect when the container itself is stopped.
+                </p>
+            </div>
+        </section>
+
+      <footer class="mt-12 pt-6 border-t border-slate-200 text-slate-600 text-sm">
+            <h2 class="text-base font-bold text-slate-800 m-0">Author - Pranesh Sathyanarayan</h2>
+            <p class="mt-1 font-medium">Published First : 14 Nov 2026</p>
+            <p class="mt-2 text-xs italic">
+                AI agent disclosure - no AI used to generate content, gemini AI was used only to perform markdown formatting and beautification.
+            </p>
+            <p class="mt-2 text-xs text-slate-500">
+                "This work is dedicated to the public domain under CC0 1.0 Universal. You are free to copy, modify, distribute, and perform the work, even for commercial purposes, all without asking permission."
+            </p>
+        </footer>
+
+    </main>
+</body>
+</html>
